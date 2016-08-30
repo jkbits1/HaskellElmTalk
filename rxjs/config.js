@@ -8,13 +8,14 @@ System.config({
     emitDecoratorMetadata: true
   },
   map: {
-    app: "/rxjs/src",
-    'rx.all': 'https://cdnjs.cloudflare.com/ajax/libs/rxjs/3.1.1/rx.all.js'
+    app: "/src",
+    'rxjs5': 'https://cdnjs.cloudflare.com/ajax/libs/rxjs/5.0.0-beta.11/Rx.umd.js'
   },
   packages: {
     app: {
       main: 'main.ts',
       defaultExtension: 'ts'
-    }
+    },
+    'rxjs5': { defaultExtension: 'js' }
   }
 });

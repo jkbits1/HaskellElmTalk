@@ -5,6 +5,8 @@
 import {Component, FORM_DIRECTIVES, CORE_DIRECTIVES, Observable, EventEmitter} from 'angular2/angular2';
 import { WheelCalcs } from './wheelCalcs';
 
+import { Subject, BehaviorSubject }    from 'rxjs5';
+
 enum WheelNums { First, Second, Third, Answers };
 
 @Component({
@@ -15,13 +17,15 @@ enum WheelNums { First, Second, Third, Answers };
   <div class="row">
     <h2>RxJs Calculations</h2>
   </div>
+  <div class="row">
+    <h5>Change the values to see the algorithm automatically recalcuate</h5>
+  </div>
   <br>
   <div class="row">
-    <input #wheel1 type="text" (keyup)="keyup1($event)" value="1,2,3">
-    <input #wheel2 type="text" (keyup)="keyup2($event)" value="4,5,6">
-    <input #wheel3 type="text" (keyup)="keyup3($event)" value="7,8,9">
-    <input #wheel4 type="text" (keyup)="keyup4($event)" value="12,15,18">
-    <button (click)="testclick($event)">test</button>
+    <input #wheel1 type="text" (keyup)="passOnEvent(wheel1subject, $event)" value="1,2,3">
+    <input #wheel2 type="text" (keyup)="passOnEvent(wheel2subject, $event)" value="4,5,6">
+    <input #wheel3 type="text" (keyup)="passOnEvent(wheel3subject, $event)" value="7,8,9">
+    <input #wheel4 type="text" (keyup)="passOnEvent(wheel4subject, $event)" value="12,15,18">
   </div>
 
   <br>
@@ -114,10 +118,10 @@ enum WheelNums { First, Second, Third, Answers };
 directives: [CORE_DIRECTIVES, FORM_DIRECTIVES]
 })
 export class App {
-  wheel1input = new EventEmitter();
-  wheel2input = new EventEmitter();
-  wheel3input = new EventEmitter();
-  wheel4input = new EventEmitter();
+  private wheel1subject = new BehaviorSubject<string>("1,2,3");
+  private wheel2subject = new Subject<string>();
+  private wheel3subject = new Subject<string>();
+  private wheel4subject = new Subject<string>();
 
   id: number = 0;
   results1 = [];
@@ -146,10 +150,10 @@ export class App {
     this.results3 = [3];
     this.results4 = [4];
 
-    this.handleWheelInputs(this.wheel1input._subject, this.results1, WheelNums.First);
-    this.handleWheelInputs(this.wheel2input._subject, this.results2, WheelNums.Second);
-    this.handleWheelInputs(this.wheel3input._subject, this.results3, WheelNums.Third);
-    this.handleWheelInputs(this.wheel4input._subject, this.results4, WheelNums.Answers);
+    this.handleWheelInputs(this.wheel1subject.asObservable(), this.results1, WheelNums.First);
+    this.handleWheelInputs(this.wheel2subject.asObservable(), this.results2, WheelNums.Second);
+    this.handleWheelInputs(this.wheel3subject.asObservable(), this.results3, WheelNums.Third);
+    this.handleWheelInputs(this.wheel4subject.asObservable(), this.results4, WheelNums.Answers);
 
     this.calcs = new WheelCalcs.Calcs1();
 
@@ -159,8 +163,8 @@ export class App {
     this.wheels[WheelNums.Answers]  = [12, 15, 18];
   }
 
-  handleWheelInputs (subject, results, wheelPos) {
-    subject
+  handleWheelInputs (input, results, wheelPos) {
+    input
       .debounceTime(50)
       .distinctUntilChanged()
       .subscribe(
@@ -218,27 +222,7 @@ export class App {
     this.answer = f;
   }
 
-  passOnEvent (input: EventEmitter, $event: any) {
+  passOnEvent (input: Subject, $event: any) {
     input.next($event.currentTarget.value);
-  }
-
-
-  keyup1 ($event) {
-    this.passOnEvent(this.wheel1input, $event);
-  }
-
-  keyup2 ($event) {
-    this.passOnEvent(this.wheel2input, $event);
-  }
-
-  keyup3 ($event) {
-    this.passOnEvent(this.wheel3input, $event);
-  }
-
-  keyup4 ($event) {
-    this.passOnEvent(this.wheel4input, $event);
-  }
-
-  testclick ($event) {
   }
 }
