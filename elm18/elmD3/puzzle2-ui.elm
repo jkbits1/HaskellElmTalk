@@ -4,10 +4,10 @@ import PuzzleModule exposing (..)
 import Wheel exposing (..)
 
 import Html exposing (..)
-import Html.App as HtmlApp
+-- import Html.App as HtmlApp
 import Html.Attributes as Attr exposing (..)
 import Html.Events exposing (..)
-import Text exposing (color)
+-- import Text exposing (color)
 import Color exposing (..)
 
 import String
@@ -96,9 +96,9 @@ showLoopButton labels hide action =
   let
     label =
       if hide == True then
-        snd labels
+        Tuple.second labels
       else
-        fst labels
+        Tuple.first labels
   in
     Html.button
       [   buttonClassList
@@ -110,9 +110,9 @@ showLoopButton2 labels hide action classList =
   let
     label =
       if hide == True then
-        snd labels
+        Tuple.second labels
       else
-        fst labels
+        Tuple.first labels
   in
     Html.button
       [   classList
@@ -246,7 +246,8 @@ infoRow label info displayState =
 --main : Signal Html
 --main = viewLift
 
-main = HtmlApp.program { init = init, view = view, update = updateModel, subscriptions = subscriptions }
+-- main = HtmlApp.program { init = init, view = view, update = updateModel, subscriptions = subscriptions }
+main = Html.program { init = init, view = view, update = updateModel, subscriptions = subscriptions }
 
 -- subscriptions, data responses from js
 port dataProcessedItems : (List String -> msg) -> Sub msg

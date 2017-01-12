@@ -36,7 +36,7 @@ createFullListFromResponses : WheelData -> List String -> List String
 createFullListFromResponses ws rs =
   List.map
     (getResponseOrDefault rs ws)
-    [0..(List.length ws)]
+    <| range 0 (List.length ws)
 
 createNewWheelStrings : WheelData -> List String -> WheelData
 createNewWheelStrings ws ns =

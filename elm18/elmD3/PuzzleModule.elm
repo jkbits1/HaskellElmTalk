@@ -58,18 +58,18 @@ makeThrLoop  = generateWheelLoop
 makeAnsLoop  = generateWheelLoop
 
 twoWheelPerms : WheelPosition -> WheelLoop -> List LoopsPermutation
-twoWheelPerms first secLoop = map (\secPosition -> first :: secPosition :: []) secLoop
+twoWheelPerms first secLoop = List.map (\secPosition -> first :: secPosition :: []) secLoop
 
 appendTwoWheelPerms : List LoopsPermutation -> WheelPosition -> List LoopsPermutation
 appendTwoWheelPerms twoWheelPermsLocal thrPos =
-  map (\twoLoopsPerm -> twoLoopsPerm ++ [thrPos]) twoWheelPermsLocal
+  List.map (\twoLoopsPerm -> twoLoopsPerm ++ [thrPos]) twoWheelPermsLocal
 
 threeLoopPerms : WheelPosition -> WheelLoop -> WheelLoop -> List LoopsPermutation
 threeLoopPerms first secLoop thrLoop =
   let
     addPosToTwoWheelPerms = appendTwoWheelPerms <| twoWheelPerms first secLoop
   in
-    concat <| map addPosToTwoWheelPerms thrLoop
+    concat <| List.map addPosToTwoWheelPerms thrLoop
 
 sumColumn : LoopsPermColumn -> Int
 sumColumn (a, b, c) = a + b + c
@@ -102,12 +102,12 @@ headLLIxx xs =
 
 
 sumPlusPerm : LoopsPermutation -> List (LoopsPermAnswers, LoopsPermutation)
-sumPlusPerm perm = [(map sumColumn <| columnsFromPermutation perm, perm)]
+sumPlusPerm perm = [(List.map sumColumn <| columnsFromPermutation perm, perm)]
 
 answersPlusPerm : WheelPosition -> WheelLoop -> WheelLoop ->
                     List (LoopsPermAnswers, LoopsPermutation)
 answersPlusPerm first secLoop thrLoop =
-  concat <| map sumPlusPerm <| threeLoopPerms first secLoop thrLoop
+  concat <| List.map sumPlusPerm <| threeLoopPerms first secLoop thrLoop
 
 findSpecificAnswer : WheelPosition ->
                        WheelLoop -> WheelLoop -> WheelLoop ->
@@ -122,7 +122,7 @@ answersPermsLoop2 (ans, lists) = (createWheelLoop ans, lists)
 answersPermsPlusList : WheelPosition -> WheelLoop -> WheelLoop ->
                         List (LoopsAnswerLoop, LoopsPermutation)
 answersPermsPlusList first secLoop thrLoop =
-  map answersPermsLoop2 <| answersPlusPerm first secLoop thrLoop
+  List.map answersPermsLoop2 <| answersPlusPerm first secLoop thrLoop
 
 -- finds solution
 findSpecificAnswerPlusList : WheelPosition -> WheelLoop -> WheelLoop -> WheelPosition ->
@@ -223,7 +223,7 @@ wheelsTuple xxs =
 getWheelsPermAnswers : WheelPosition -> WheelLoop -> WheelLoop -> Int ->
                         LoopsPermAnswers
 getWheelsPermAnswers first secLoop thrLoop n =
-  map sumColumn <| wheelsTuple <|
+  List.map sumColumn <| wheelsTuple <|
         threeWheelsPermsItemByCounter first secLoop thrLoop
         <| getCounter n
 
@@ -232,11 +232,11 @@ findAnswerCS : WheelPosition -> WheelLoop -> WheelLoop -> WheelLoop ->
 findAnswerCS first secLoop thrLoop ansLoop =
   let
     ansIdx = headCounter <|
-      map (\(i, _) -> i) <|
+      List.map (\(i, _) -> i) <|
         filter (\(i, b) -> b == True) <|
-          map (\i -> (i, elem2 (getWheelsPermAnswers first secLoop thrLoop i) ansLoop))
+          List.map (\i -> (i, elem2 (getWheelsPermAnswers first secLoop thrLoop i) ansLoop))
             -- [1..5000000] - elm can't cope, as it doesn't do lazy eval
-            [1..512]
+            <| range 1 512
     answers = getWheelsPermAnswers first secLoop thrLoop ansIdx
     loopsPerm = threeWheelsPermsItemByCounter first secLoop thrLoop <| getCounter ansIdx
   in
