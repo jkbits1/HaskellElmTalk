@@ -12,7 +12,15 @@ import String
 import List exposing (..)
 
 
-type alias ModelInputs  = (Int, String, String, String, String)
+-- type alias ModelInputs  = (Int, String, String, String, String)
+type alias ModelInputs  = { 
+    count : Int
+  , s1 : String
+  , s2 : String
+  , s3 : String
+  , s4 : String 
+  }
+
 type alias ModelButtons = List Bool
 
 -- values generated from UI input
@@ -229,12 +237,21 @@ subscriptions model = dataProcessedItems D3Response
 -- used by main, as a non-signal function, to convert a Model to Html
 view : Model -> Html Msg
 view ( stateHistory,
-        (i, s1, s2, s3, s4),
+        -- (i, s1, s2, s3, s4)
+        inputs
+        ,
         buttonList,
         (firstList, secLoop, thrLoop, ansLoop, twoListPerms, threeListPerms,
           (ansPlusList, specificAnswer, ansPermsPlusList, specificAnswerPlusList
             , findAnswerLazy3))
       ) =
+  let 
+    i = inputs.count
+    s1 = inputs.s1
+    s2 = inputs.s2
+    s3 = inputs.s3
+    s4 = inputs.s4
+  in
   div [] [
   div [
     class "container"
@@ -362,27 +379,45 @@ port showWheel : List (List WheelItem) -> Cmd msg
 
 -- converts Update to new Model
 updateModel : Msg -> Model -> (Model, Cmd Msg)
-updateModel update (stateHistory, (i, s1, s2, s3, s4),
+updateModel update (stateHistory, 
+                    --  (i, s1, s2, s3, s4)
+                    inputs
+                     ,
                      buttonList,
                      --(xs, xxs2, xxs3, xxs4, s9, s10, (s11, s12, s13, s14))
                      results
                    ) =
   let
+    i  = inputs.count
+    s1 = inputs.s1    
+    s2 = inputs.s2    
+    s3 = inputs.s3    
+    s4 = inputs.s4
     newCount   = i + 1
     (inputs, states) = Maybe.withDefault
                   (initialInputs, initialStates)
                   (head stateHistory)
     tailHistory     = Maybe.withDefault [] (tail stateHistory)
 
-    createModel (i, s1, s2, s3, s4) buttonStates forward =
+    createModel 
+      inputs
+      -- (i, s1, s2, s3, s4) 
+      buttonStates forward =
       let
+        i  = inputs.count
+        s1 = inputs.s1    
+        s2 = inputs.s2    
+        s3 = inputs.s3    
+        s4 = inputs.s4
         newHistory =
           if forward == True then
             (inputs, buttonStates) :: stateHistory
           else
             tailHistory
 
-        inputs    = (i, s1, s2, s3, s4)
+        -- inputs    = (i, s1, s2, s3, s4)
+        -- inputs    = { inputs.count, inputs.s1, inputs.s2, inputs.s3, inputs.s4 }
+        -- inputs    = { inputs.count, inputs.s1, inputs.s2, inputs.s3, inputs.s4 }
 
         first     = wheelPositionFromString s1
         answers   = wheelPositionFromString s4
@@ -399,49 +434,51 @@ updateModel update (stateHistory, (i, s1, s2, s3, s4),
                         , findAnswerCS first secLoop thrLoop ansLoop))
       in
         (newHistory, inputs, buttonStates, newCalcs)
-    mdl = createModel (i,       s1, s2, s3, s4) buttonList True
+    mdl = createModel inputs buttonList True
     wd1 = d3DataFromString s1
     wd2 = d3DataFromString s2
     wd3 = d3DataFromString s3
     wd4 = d3DataFromString s4
   in
     case update of
-      NoOp        ->    (createModel (i,       s1, s2, s3, s4) buttonList True, Cmd.none)
+      NoOp        ->    (createModel inputs buttonList True, Cmd.none)
 
       Back        ->    (createModel inputs states False, 
                             Cmd.none
                             -- showWheel [ wd1, wd2, wd3, wd4  ] 
                             )
 
-      Circle1Field s -> (createModel(newCount, s,  s2, s3, s4) buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
-      Circle2Field s -> (createModel(newCount, s1, s,  s3, s4) buttonList True, showWheel [ wd1, d3DataFromString s, wd3, wd4  ] )
-      Circle3Field s -> (createModel(newCount, s1, s2, s,  s4) buttonList True, showWheel [ wd1, wd2, d3DataFromString s, wd4 ] )
-      Circle4Field s -> (createModel(newCount, s1, s2, s3, s)  buttonList True, showWheel [ wd1, wd2, wd3, d3DataFromString s ] )
+      -- Circle1Field s -> (createModel(newCount, s,  s2, s3, s4) buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
+      Circle1Field s -> (createModel { inputs | count = newCount, s1 = s } buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
+      Circle2Field s -> (createModel { inputs | count = newCount, s2 = s } buttonList True, showWheel [ wd1, d3DataFromString s, wd3, wd4  ] )
+      Circle3Field s -> (createModel { inputs | count = newCount, s3 = s } buttonList True, showWheel [ wd1, wd2, d3DataFromString s, wd4 ] )
+      Circle4Field s -> (createModel { inputs | count = newCount, s4 = s }  buttonList True, showWheel [ wd1, wd2, wd3, d3DataFromString s ] )
 
-      ShowAns     ->    (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 1) True, Cmd.none)
-      ShowLoop2   ->    (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 2) True, Cmd.none)
-      ShowLoop3   ->    (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 3) True, Cmd.none)
+      ShowAns     ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 1) True, Cmd.none)
+      ShowLoop2   ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 2) True, Cmd.none)
+      ShowLoop3   ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 3) True, Cmd.none)
 
-      ShowLoopAns ->    (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 4) True, Cmd.none)
-
-      ShowPerms2 ->     (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 5) True, Cmd.none)
-      ShowPerms3 ->     (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 6) True, Cmd.none)
-
-      ShowState ->      (createModel(newCount, s1, s2, s3, s4) (buttonListToggle buttonList 7) True, Cmd.none)
+      ShowLoopAns ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 4) True, Cmd.none)
+ 
+      ShowPerms2 ->     (createModel { inputs | count = newCount } (buttonListToggle buttonList 5) True, Cmd.none)
+      ShowPerms3 ->     (createModel { inputs | count = newCount } (buttonListToggle buttonList 6) True, Cmd.none)
+ 
+      ShowState ->      (createModel { inputs | count = newCount } (buttonListToggle buttonList 7) True, Cmd.none)
 
       ChangeWheel ->    (mdl, showWheel [ wd1, wd2, wd3, wd4  ] )
 
       -- currently a no-op
-      D3Response rs -> (createModel (i,       s1, s2, s3, s4) buttonList True, Cmd.none)
+      D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
 
-      Rotate1 -> (createModel (i,       rotateNumsString s1, s2, s3, s4) buttonList True,
+      Rotate1 -> (createModel { inputs | count = i, s1 = rotateNumsString s1 } buttonList True,
                     showWheel [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ])
-      Rotate2 -> (createModel (i,       s1, rotateNumsString s2, s3, s4) buttonList True,
+      Rotate2 -> (createModel { inputs | count = i, s2 = rotateNumsString s2 } buttonList True,
                     showWheel [ wd1, d3DataFromString <| rotateNumsString s2, wd3, wd4 ])
-      Rotate3 -> (createModel (i,       s1, s2, rotateNumsString s3, s4) buttonList True,
+      Rotate3 -> (createModel { inputs | count = i, s3 = rotateNumsString s3 } buttonList True,
                     showWheel [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ])
 
-initialInputs = (0, "1,2,3", "4,5,6", "7,8,9", "12,15,18")
+-- initialInputs = (0, "1,2,3", "4,5,6", "7,8,9", "12,15,18")
+initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
 initialStates = [False, False, False, False, False, False, False, False, False, False]
 initialCalcs  =
     ([1,2,3], [[4,5,6]], [[7,8,9]], [[12,15,18]], [[[2]]], [[[3]]],
@@ -469,13 +506,13 @@ init =
 
 
 input1 : ModelInputs -> String
-input1 (_, i1, _, _, _) = i1
+input1 inputs = inputs.s1
 input2 : ModelInputs -> String
-input2 (_, _, i2, _, _) = i2
+input2 inputs = inputs.s2
 input3 : ModelInputs -> String
-input3 (_, _, _, i3, _) = i3
+input3 inputs = inputs.s3
 input4 : ModelInputs -> String
-input4 (_, _, _, _, i4) = i4
+input4 inputs = inputs.s4
 
 modelInputs : Model -> ModelInputs
 modelInputs
