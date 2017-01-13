@@ -74,44 +74,39 @@ buttonListToggle list num = take (num-1) list ++ [not <| buttonVal list num] ++ 
 emptyClassList      = classList []
 textButtonClassList = classList [ ("textButton", True) ]
 
-backButton : Html Msg
-backButton    = uiButton Back       "Step Back"
-
-uiButton : Msg -> String -> Html Msg
-uiButton action label = 
-  Html.button
-    [ emptyClassList
-    , Html.Events.onClick action
-    ]
-    [ Html.text label ]
-
-rotButton labelNum msg =
-  div [ class "rotButton" ] [
-    Html.button
-    [
-      Html.Events.onClick msg
-    ]
-    [ Html.text <| "Rotate " ++ labelNum ]
-  ]
-
-showButton labels hide action classList =
+showButtonBasic action classList label =
   Html.button
     [ classList
     , Html.Events.onClick action
     ]
-    [ Html.text <| labelChoice labels hide ]
+    [ Html.text label ]
 
-showLoopButton  labels hide action = showButton labels hide action emptyClassList
-showTextButton  labels hide action = showButton labels hide action textButtonClassList
+uiButton : Msg -> String -> Html Msg
+uiButton action label = 
+  showButtonBasic action emptyClassList <| label
+
+backButton : Html Msg
+backButton = uiButton Back "Step Back"
+
+rotButton labelNum action =
+  div [ class "rotButton" ] [
+    uiButton action <| "Rotate " ++ labelNum
+  ]
+
+showButtonToggle action classList labels hide = 
+  showButtonBasic action classList <| labelChoice labels hide
+
+showButtonToggleLoop  labels hide action = showButtonToggle action emptyClassList       labels hide 
+showButtonToggleText  labels hide action = showButtonToggle action textButtonClassList  labels hide 
 
 -- answersButton : Bool -> Html Msg
 -- stateButton : Bool -> Html Msg
 -- perms2Button : Bool -> Html Msg
 -- perms3Button : Bool -> Html Msg
-answersButton hide  = showTextButton ("Show Answers", "Hide Answers") hide ShowAns 
-stateButton   hide  = showTextButton ("Show State",   "Hide State")   hide ShowState
-perms2Button  hide  = showTextButton ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
-perms3Button  hide  = showTextButton ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
+answersButton hide  = showButtonToggleText ("Show Answers", "Hide Answers") hide ShowAns 
+stateButton   hide  = showButtonToggleText ("Show State",   "Hide State")   hide ShowState
+perms2Button  hide  = showButtonToggleText ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
+perms3Button  hide  = showButtonToggleText ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
 
 labelChoice labels hide = 
   if hide == True then
@@ -170,7 +165,7 @@ wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
       ] [ text <| wheelData ]
       , div [
       class "col-sm-1 plusAdjust"
-      ] [ showLoopButton ("+", "-") hide action ]
+      ] [ showButtonToggleLoop ("+", "-") hide action ]
       , div [
         class "col-sm-2", style <| (displayStyle hide) ++ [("font-weight", "700")]
         ] [
@@ -419,13 +414,13 @@ updateModel update ( stateHistory, inputs, buttonList, results ) =
 
         newCalcs  = {
             firstList = first, secLoop = secLoop, thrLoop = thrLoop, ansLoop = ansLoop,
-            twoListPerms            = twoWheelPerms first secLoop, 
-            threeListPerms          = threeLoopPerms first secLoop thrLoop,
-            ansPlusList             = answersPlusPerm      first secLoop thrLoop,
-            specificAnswer          = findSpecificAnswer  first secLoop thrLoop ansLoop,
-            ansPermsPlusList        = answersPermsPlusList first secLoop thrLoop,
-            specificAnswerPlusList  = displaySpecificAnswers first secLoop thrLoop answers,
-            findAnswerLazy3         = findAnswerCS first secLoop thrLoop ansLoop
+            twoListPerms            = twoWheelPerms           first secLoop, 
+            threeListPerms          = threeLoopPerms          first secLoop thrLoop,
+            ansPlusList             = answersPlusPerm         first secLoop thrLoop,
+            specificAnswer          = findSpecificAnswer      first secLoop thrLoop ansLoop,
+            ansPermsPlusList        = answersPermsPlusList    first secLoop thrLoop,
+            specificAnswerPlusList  = displaySpecificAnswers  first secLoop thrLoop answers,
+            findAnswerLazy3         = findAnswerCS            first secLoop thrLoop ansLoop
           }
       in
         (newHistory, inputs, buttonStates, newCalcs)
@@ -483,7 +478,6 @@ updateModel update ( stateHistory, inputs, buttonList, results ) =
       Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotateNumsString s3 }
                                     [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ]
 
--- initialInputs = (0, "1,2,3", "4,5,6", "7,8,9", "12,15,18")
 initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
 initialStates = [False, False, False, False, False, False, False, False, False, False]
 initialCalcs  = {
@@ -500,43 +494,22 @@ initialCalcs  = {
   , findAnswerLazy3         = ([1], [[1]])
   }
 
-    -- [[[2]]], [[[3]]],
-    --   ([([1], [[1]])], [([1], [[1]])], [([[1]], [[1]])], [([[1]], [[1]])]
-    --   ,([1], [[1]])
-    --   )
-
-
---     type alias ModelResults = {
---     firstList : WheelPosition
---   , secLoop : WheelLoop
---   , thrLoop : WheelLoop
---   , ansLoop : WheelLoop
---   , twoListPerms            : List LoopsPermutation
---   , threeListPerms          : List LoopsPermutation
---   , ansPlusList             : List (LoopsPermAnswers, LoopsPermutation)
---   , specificAnswer          : List (LoopsPermAnswers, LoopsPermutation)
---   , ansPermsPlusList        : List (LoopsAnswerLoop, LoopsPermutation)
---   , specificAnswerPlusList  : List (LoopsAnswerLoop, LoopsPermutation)
---   , findAnswerLazy3         : (LoopsPermAnswers, LoopsPermutation)
--- }
-
-
-initialModelState =
-  ([],
-      initialInputs,
-    initialStates,
-    initialCalcs
+initialModelState = ( 
+    []
+  , initialInputs
+  , initialStates
+  , initialCalcs
   )
 
 init =
   let
-    mdl = initialModelState
-    wd1 = resultsToD3Data <| wheelData mdl input1
-    wd2 = resultsToD3Data <| wheelData mdl input2
-    wd3 = resultsToD3Data <| wheelData mdl input3
-    wd4 = resultsToD3Data <| wheelData mdl input4
+    model = initialModelState
+    wd1 = resultsToD3Data <| wheelData model input1
+    wd2 = resultsToD3Data <| wheelData model input2
+    wd3 = resultsToD3Data <| wheelData model input3
+    wd4 = resultsToD3Data <| wheelData model input4
   in
-    (mdl, showWheel [ wd1, wd2, wd3, wd4 ] )
+    (model, showWheel [ wd1, wd2, wd3, wd4 ] )
 
 
 -- type signatures have to come directly before fn, which ruins readability, 
