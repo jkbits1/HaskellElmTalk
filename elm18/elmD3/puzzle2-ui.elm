@@ -58,46 +58,47 @@ buttonVal list num = Maybe.withDefault False <| head (drop (num - 1) list)
 maxButton = 10
 buttonListToggle list num = take (num-1) list ++ [not <| buttonVal list num] ++ take (maxButton - num) (drop num list)
 
-
-emptyClassList = classList []
-
+emptyClassList      = classList []
 textButtonClassList = classList [ ("textButton", True) ]
 
 backButton : Html Msg
 backButton    = uiButton Back       "Step Back"
 
-showButton labels hide action classList =
-    Html.button
-      [   classList
-        , Html.Events.onClick action
-      ]
-      [ Html.text <| labelChoice labels hide ]
-
-showLoopButton  labels hide action =
-  showButton labels hide action emptyClassList
-
-showTextButton  labels hide action =
-  showButton labels hide action textButtonClassList
-
-answersButton : Bool -> Html Msg
-answersButton hide  = showTextButton ("Show Answers", "Hide Answers") hide ShowAns 
-
-stateButton : Bool -> Html Msg
-stateButton  hide   = showTextButton ("Show State",   "Hide State")   hide ShowState
-
-perms2Button : Bool -> Html Msg
-perms2Button hide   = showTextButton ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
-
-perms3Button : Bool -> Html Msg
-perms3Button hide   = showTextButton ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
-
-
 uiButton : Msg -> String -> Html Msg
-uiButton action label = Html.button
-  [
-      emptyClassList
-    , Html.Events.onClick action]
-  [ Html.text label ]
+uiButton action label = 
+  Html.button
+    [ emptyClassList
+    , Html.Events.onClick action
+    ]
+    [ Html.text label ]
+
+rotButton labelNum msg =
+  div [ class "rotButton" ] [
+    Html.button
+    [
+      Html.Events.onClick msg
+    ]
+    [ Html.text <| "Rotate " ++ labelNum ]
+  ]
+
+showButton labels hide action classList =
+  Html.button
+    [ classList
+    , Html.Events.onClick action
+    ]
+    [ Html.text <| labelChoice labels hide ]
+
+showLoopButton  labels hide action = showButton labels hide action emptyClassList
+showTextButton  labels hide action = showButton labels hide action textButtonClassList
+
+-- answersButton : Bool -> Html Msg
+-- stateButton : Bool -> Html Msg
+-- perms2Button : Bool -> Html Msg
+-- perms3Button : Bool -> Html Msg
+answersButton hide  = showTextButton ("Show Answers", "Hide Answers") hide ShowAns 
+stateButton   hide  = showTextButton ("Show State",   "Hide State")   hide ShowState
+perms2Button  hide  = showTextButton ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
+perms3Button  hide  = showTextButton ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
 
 labelChoice labels hide = 
   if hide == True then
@@ -112,8 +113,8 @@ inputField2 idVal default text updateItem inputStyle =
   input
     [ placeholder default, Attr.value text
     , onInput updateItem
-      , id idVal
-      , class "form-control col-sm-2 wheelStyle"
+    , id idVal
+    , class "form-control col-sm-2 wheelStyle"
     ]
     []
 formGroup : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
@@ -121,13 +122,13 @@ formGroup lbl idVal val updateItem style msg =
   div [
     class "wheelInput"
   ] [
-        label [
-          for idVal
-        , classList [("control-label", True),("col-sm-4", True), ("wheelInputLabel", True)]
-        ] [
-          text <| "Wheel " ++ lbl
-        ]
-      , inputField2 idVal lbl val updateItem style
+    label [
+      for idVal
+    , classList [("control-label", True), ("col-sm-4", True), ("wheelInputLabel", True)]
+    ] [
+      text <| "Wheel " ++ lbl
+    ]
+  , inputField2 idVal lbl val updateItem style
   ]
 
 wheelOnlyRow idx wheelLabel wheelData =
@@ -187,14 +188,10 @@ foundAnswerIndicator answerList show =
 
 
 myStyle : List (String, String)
-myStyle =
-  [
-  ]
+myStyle = []
 
 textStyle : List (String, String)
-textStyle =
-  [
-  ]
+textStyle = []
 
 displayStyle : Bool -> List (String, String)
 displayStyle show =
@@ -207,13 +204,13 @@ infoRow label info displayState =
   class "row",
         style
                       (displayStyle displayState)
-                      ] [
-      div [
-        class "col-sm-2 wheelRowLabel"
-        ] [ text label ]
-    , div [
-        class "col-sm-8 permsData"
-      ] [ text <| info ]
+  ] [
+    div [
+      class "col-sm-2 wheelRowLabel"
+      ] [ text label ]
+  , div [
+      class "col-sm-8 permsData"
+    ] [ text <| info ]
   ]
 
 
@@ -228,7 +225,6 @@ main = Html.program { init = init, view = view, update = updateModel, subscripti
 port dataProcessedItems : (List String -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
---subscriptions model = Sub.none
 subscriptions model = dataProcessedItems D3Response
 
 --viewLift : Signal Html
@@ -295,12 +291,9 @@ view ( stateHistory,
           ]
         ]
     , div [classList [("rotBtns", True)]] [
-        rotButton "1" Rotate1
-        ,
-          rotButton "2" Rotate2
-        ,
-        rotButton "3" Rotate3
-
+          rotButton "1" Rotate1
+        , rotButton "2" Rotate2
+        , rotButton "3" Rotate3
       ]
     , div [id "chart"
       ] []
@@ -308,9 +301,9 @@ view ( stateHistory,
     , br [] []
 
     , div [classList [("wheelCalcs", True)]] [
-        wheelOnlyRow  1 "Wheel 1"               s1
-      , wheelRow      2 "Wheel 2"   "Loop 2"    s2 (toString secLoop) ShowLoop2   <| buttonVal buttonList 2
-      , wheelRow      3 "Wheel 3"   "Loop 3"    s3 (toString thrLoop) ShowLoop3   <| buttonVal buttonList 3
+        wheelOnlyRow  1 "Wheel 1"                       s1
+      , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonVal buttonList 2
+      , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonVal buttonList 3
       , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonVal buttonList 4
     ]
   ]
@@ -357,15 +350,6 @@ view ( stateHistory,
     ]
   ]
 
-rotButton labelNum msg =
-  div [ class "rotButton" ] [
-    Html.button
-    [
-      Html.Events.onClick msg
-    ]
-    [ Html.text <| "Rotate " ++ labelNum ]
-  ]
-
 -- outgoing port to js
 port showWheel : List (List WheelItem) -> Cmd msg
 
@@ -379,14 +363,7 @@ port showWheel : List (List WheelItem) -> Cmd msg
 
 -- converts Update to new Model
 updateModel : Msg -> Model -> (Model, Cmd Msg)
-updateModel update (stateHistory, 
-                    --  (i, s1, s2, s3, s4)
-                    inputs
-                     ,
-                     buttonList,
-                     --(xs, xxs2, xxs3, xxs4, s9, s10, (s11, s12, s13, s14))
-                     results
-                   ) =
+updateModel update ( stateHistory, inputs, buttonList, results ) =
   let
     i  = inputs.count
     s1 = inputs.s1    
@@ -394,30 +371,23 @@ updateModel update (stateHistory,
     s3 = inputs.s3    
     s4 = inputs.s4
     newCount   = i + 1
-    (inputs, states) = Maybe.withDefault
-                  (initialInputs, initialStates)
-                  (head stateHistory)
-    tailHistory     = Maybe.withDefault [] (tail stateHistory)
+    (inputs, states) = Maybe.withDefault (initialInputs, initialStates) <| head stateHistory
+    tailHistory      = Maybe.withDefault [] <| tail stateHistory
 
     createModel 
       inputs
-      -- (i, s1, s2, s3, s4) 
       buttonStates forward =
       let
         i  = inputs.count
-        s1 = inputs.s1    
-        s2 = inputs.s2    
-        s3 = inputs.s3    
+        s1 = inputs.s1
+        s2 = inputs.s2
+        s3 = inputs.s3
         s4 = inputs.s4
         newHistory =
           if forward == True then
             (inputs, buttonStates) :: stateHistory
           else
             tailHistory
-
-        -- inputs    = (i, s1, s2, s3, s4)
-        -- inputs    = { inputs.count, inputs.s1, inputs.s2, inputs.s3, inputs.s4 }
-        -- inputs    = { inputs.count, inputs.s1, inputs.s2, inputs.s3, inputs.s4 }
 
         first     = wheelPositionFromString s1
         answers   = wheelPositionFromString s4
@@ -439,6 +409,12 @@ updateModel update (stateHistory,
     wd2 = d3DataFromString s2
     wd3 = d3DataFromString s3
     wd4 = d3DataFromString s4
+    
+    createModelCircle inputs wheelData = 
+      (createModel inputs buttonList True, showWheel wheelData )
+
+    createModelShow buttonNum = 
+      createModel { inputs | count = newCount } (buttonListToggle buttonList buttonNum) True
   in
     case update of
       NoOp        ->    (createModel inputs buttonList True, Cmd.none)
@@ -448,34 +424,39 @@ updateModel update (stateHistory,
                             -- showWheel [ wd1, wd2, wd3, wd4  ] 
                             )
 
-      -- Circle1Field s -> (createModel(newCount, s,  s2, s3, s4) buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
-      Circle1Field s -> (createModel { inputs | count = newCount, s1 = s } buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
-      Circle2Field s -> (createModel { inputs | count = newCount, s2 = s } buttonList True, showWheel [ wd1, d3DataFromString s, wd3, wd4  ] )
-      Circle3Field s -> (createModel { inputs | count = newCount, s3 = s } buttonList True, showWheel [ wd1, wd2, d3DataFromString s, wd4 ] )
-      Circle4Field s -> (createModel { inputs | count = newCount, s4 = s }  buttonList True, showWheel [ wd1, wd2, wd3, d3DataFromString s ] )
+      -- Circle1Field s -> (createModel { inputs | count = newCount, s1 = s } buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
+      Circle1Field s -> createModelCircle { inputs | count = newCount, s1 = s } [ d3DataFromString s, wd2, wd3, wd4 ]
+      Circle2Field s -> createModelCircle { inputs | count = newCount, s2 = s } [ wd1, d3DataFromString s, wd3, wd4 ]
+      Circle3Field s -> createModelCircle { inputs | count = newCount, s3 = s } [ wd1, wd2, d3DataFromString s, wd4 ]
+      Circle4Field s -> createModelCircle { inputs | count = newCount, s4 = s } [ wd1, wd2, wd3, d3DataFromString s ]
 
-      ShowAns     ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 1) True, Cmd.none)
-      ShowLoop2   ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 2) True, Cmd.none)
-      ShowLoop3   ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 3) True, Cmd.none)
+      -- ShowAns     ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 1) True, Cmd.none)
+      ShowAns     ->    (createModelShow 1, Cmd.none)
+      ShowLoop2   ->    (createModelShow 2, Cmd.none)
+      ShowLoop3   ->    (createModelShow 3, Cmd.none)
 
-      ShowLoopAns ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 4) True, Cmd.none)
- 
-      ShowPerms2 ->     (createModel { inputs | count = newCount } (buttonListToggle buttonList 5) True, Cmd.none)
-      ShowPerms3 ->     (createModel { inputs | count = newCount } (buttonListToggle buttonList 6) True, Cmd.none)
- 
-      ShowState ->      (createModel { inputs | count = newCount } (buttonListToggle buttonList 7) True, Cmd.none)
+      ShowLoopAns ->    (createModelShow 4, Cmd.none)
+
+      ShowPerms2 ->     (createModelShow 5, Cmd.none)
+      ShowPerms3 ->     (createModelShow 6, Cmd.none)
+
+      ShowState ->      (createModelShow 7, Cmd.none)
 
       ChangeWheel ->    (mdl, showWheel [ wd1, wd2, wd3, wd4  ] )
 
       -- currently a no-op
       D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
 
-      Rotate1 -> (createModel { inputs | count = i, s1 = rotateNumsString s1 } buttonList True,
-                    showWheel [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ])
-      Rotate2 -> (createModel { inputs | count = i, s2 = rotateNumsString s2 } buttonList True,
-                    showWheel [ wd1, d3DataFromString <| rotateNumsString s2, wd3, wd4 ])
-      Rotate3 -> (createModel { inputs | count = i, s3 = rotateNumsString s3 } buttonList True,
-                    showWheel [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ])
+      -- Rotate1 -> (createModel { inputs | count = i, s1 = rotateNumsString s1 } buttonList True,
+      --               showWheel [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ])
+      Rotate1 -> createModelCircle  { inputs | count = i, s1 = rotateNumsString s1 } 
+                                    [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ]
+
+      Rotate2 -> createModelCircle  { inputs | count = i, s2 = rotateNumsString s2 }
+                                    [ wd1, d3DataFromString <| rotateNumsString s2, wd3, wd4 ]
+
+      Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotateNumsString s3 }
+                                    [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ]
 
 -- initialInputs = (0, "1,2,3", "4,5,6", "7,8,9", "12,15,18")
 initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
@@ -505,13 +486,15 @@ init =
     (mdl, showWheel [ wd1, wd2, wd3, wd4 ] )
 
 
-input1 : ModelInputs -> String
+-- type signatures have to come directly before fn, which ruins readability, 
+-- so they are commented out.
+-- input1 : ModelInputs -> String
+-- input2 : ModelInputs -> String
+-- input3 : ModelInputs -> String
+-- input4 : ModelInputs -> String
 input1 inputs = inputs.s1
-input2 : ModelInputs -> String
 input2 inputs = inputs.s2
-input3 : ModelInputs -> String
 input3 inputs = inputs.s3
-input4 : ModelInputs -> String
 input4 inputs = inputs.s4
 
 modelInputs : Model -> ModelInputs
