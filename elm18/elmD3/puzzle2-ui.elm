@@ -44,13 +44,7 @@ type Msg =
       Rotate3
 
 buttonVal : List Bool -> Int -> Bool
-buttonVal list num =
-  let
-    h = head (drop (num - 1) list)
-  in
-    case h of
-      Just x  -> x
-      Nothing -> False
+buttonVal list num = Maybe.withDefault False <| head (drop (num - 1) list)
 
 -- max buttons is 9, 10 items in list
 maxButton = 10
@@ -59,22 +53,35 @@ buttonListToggle list num = take (num-1) list ++ [not <| buttonVal list num] ++ 
 
 emptyClassList = classList []
 
-buttonClassList2 = classList [ ("textButton", True) ]
+textButtonClassList = classList [ ("textButton", True) ]
 
 backButton : Html Msg
 backButton    = uiButton Back       "Step Back"
 
+showButton labels hide action classList =
+    Html.button
+      [   classList
+        , Html.Events.onClick action
+      ]
+      [ Html.text <| labelChoice labels hide ]
+
+showLoopButton  labels hide action =
+  showButton labels hide action emptyClassList
+
+showTextButton  labels hide action =
+  showButton labels hide action textButtonClassList
+
 answersButton : Bool -> Html Msg
-answersButton hide  = showButton ("Show Answers", "Hide Answers") hide ShowAns buttonClassList2
+answersButton hide  = showTextButton ("Show Answers", "Hide Answers") hide ShowAns 
 
 stateButton : Bool -> Html Msg
-stateButton  hide   = showButton ("Show State", "Hide State")     hide ShowState buttonClassList2
+stateButton  hide   = showTextButton ("Show State",   "Hide State")   hide ShowState
 
 perms2Button : Bool -> Html Msg
-perms2Button hide   = showButton ("Show Perms 2", "Hide Perms 2") hide ShowPerms2 buttonClassList2
+perms2Button hide   = showTextButton ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
 
 perms3Button : Bool -> Html Msg
-perms3Button hide   = showButton ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 buttonClassList2
+perms3Button hide   = showTextButton ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
 
 
 uiButton : Msg -> String -> Html Msg
@@ -89,16 +96,6 @@ labelChoice labels hide =
     Tuple.second labels
   else
     Tuple.first labels
-
-showButton labels hide action classList =
-    Html.button
-      [   classList
-        , Html.Events.onClick action
-      ]
-      [ Html.text <| labelChoice labels hide ]
-
-showLoopButton  labels hide action =
-  showButton labels hide action emptyClassList
 
 inputField2 : String -> String -> String ->
               (String -> Msg) ->
@@ -344,16 +341,13 @@ view ( stateHistory,
   ]
 
 rotButton labelNum msg =
-  div [
-    class "rotButton" -- "wheelInput"
-    ] [
-  Html.button
-      [
-        Html.Events.onClick msg
-      ]
-      [ Html.text <| "Rotate " ++ labelNum ]
+  div [ class "rotButton" ] [
+    Html.button
+    [
+      Html.Events.onClick msg
+    ]
+    [ Html.text <| "Rotate " ++ labelNum ]
   ]
-
 
 -- outgoing port to js
 port showWheel : List (List WheelItem) -> Cmd msg
