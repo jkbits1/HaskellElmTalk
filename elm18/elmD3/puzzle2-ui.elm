@@ -24,13 +24,26 @@ type alias ModelInputs  = {
 type alias ModelButtons = List Bool
 
 -- values generated from UI input
-type alias ModelResults =
-  (WheelPosition, WheelLoop, WheelLoop, WheelLoop,
-    List LoopsPermutation,                      List LoopsPermutation,
-    (List (LoopsPermAnswers, LoopsPermutation), List (LoopsPermAnswers, LoopsPermutation),
-      List (LoopsAnswerLoop, LoopsPermutation), List (LoopsAnswerLoop, LoopsPermutation)
-      , (LoopsPermAnswers, LoopsPermutation)
-      ))
+-- type alias ModelResults =
+--   (WheelPosition, WheelLoop, WheelLoop, WheelLoop,
+--     List LoopsPermutation,                      List LoopsPermutation,
+--     (List (LoopsPermAnswers, LoopsPermutation), List (LoopsPermAnswers, LoopsPermutation),
+--       List (LoopsAnswerLoop, LoopsPermutation), List (LoopsAnswerLoop, LoopsPermutation)
+--       , (LoopsPermAnswers, LoopsPermutation)
+--       ))
+type alias ModelResults = {
+    firstList : WheelPosition
+  , secLoop : WheelLoop
+  , thrLoop : WheelLoop
+  , ansLoop : WheelLoop
+  , twoListPerms            : List LoopsPermutation
+  , threeListPerms          : List LoopsPermutation
+  , ansPlusList             : List (LoopsPermAnswers, LoopsPermutation)
+  , specificAnswer          : List (LoopsPermAnswers, LoopsPermutation)
+  , ansPermsPlusList        : List (LoopsAnswerLoop, LoopsPermutation)
+  , specificAnswerPlusList  : List (LoopsAnswerLoop, LoopsPermutation)
+  , findAnswerLazy3         : (LoopsPermAnswers, LoopsPermutation)
+}
 
 type alias Model = (ModelList, ModelInputs, ModelButtons, ModelResults)
 
@@ -237,9 +250,7 @@ view ( stateHistory,
         inputs
         ,
         buttonList,
-        (firstList, secLoop, thrLoop, ansLoop, twoListPerms, threeListPerms,
-          (ansPlusList, specificAnswer, ansPermsPlusList, specificAnswerPlusList
-            , findAnswerLazy3))
+        results
       ) =
   let 
     i = inputs.count
@@ -247,6 +258,17 @@ view ( stateHistory,
     s2 = inputs.s2
     s3 = inputs.s3
     s4 = inputs.s4
+    firstList = results.firstList
+    secLoop   = results.secLoop
+    thrLoop   = results.thrLoop
+    ansLoop   = results.ansLoop
+    twoListPerms            = results.twoListPerms
+    threeListPerms          = results.threeListPerms
+    ansPlusList             = results.ansPlusList
+    specificAnswer          = results.specificAnswer
+    ansPermsPlusList        = results.ansPermsPlusList
+    specificAnswerPlusList  = results.specificAnswerPlusList
+    findAnswerLazy3         = results.findAnswerLazy3
   in
   div [] [
   div [
@@ -395,13 +417,16 @@ updateModel update ( stateHistory, inputs, buttonList, results ) =
         thrLoop   = makeThrLoop s3
         ansLoop   = makeAnsLoop s4
 
-        newCalcs  = (first, secLoop, thrLoop, ansLoop,
-                      twoWheelPerms first secLoop, threeLoopPerms first secLoop thrLoop,
-                      (answersPlusPerm      first secLoop thrLoop,
-                        findSpecificAnswer  first secLoop thrLoop ansLoop,
-                        answersPermsPlusList first secLoop thrLoop,
-                        displaySpecificAnswers first secLoop thrLoop answers
-                        , findAnswerCS first secLoop thrLoop ansLoop))
+        newCalcs  = {
+            firstList = first, secLoop = secLoop, thrLoop = thrLoop, ansLoop = ansLoop,
+            twoListPerms            = twoWheelPerms first secLoop, 
+            threeListPerms          = threeLoopPerms first secLoop thrLoop,
+            ansPlusList             = answersPlusPerm      first secLoop thrLoop,
+            specificAnswer          = findSpecificAnswer  first secLoop thrLoop ansLoop,
+            ansPermsPlusList        = answersPermsPlusList first secLoop thrLoop,
+            specificAnswerPlusList  = displaySpecificAnswers first secLoop thrLoop answers,
+            findAnswerLazy3         = findAnswerCS first secLoop thrLoop ansLoop
+          }
       in
         (newHistory, inputs, buttonStates, newCalcs)
     mdl = createModel inputs buttonList True
@@ -461,12 +486,40 @@ updateModel update ( stateHistory, inputs, buttonList, results ) =
 -- initialInputs = (0, "1,2,3", "4,5,6", "7,8,9", "12,15,18")
 initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
 initialStates = [False, False, False, False, False, False, False, False, False, False]
-initialCalcs  =
-    ([1,2,3], [[4,5,6]], [[7,8,9]], [[12,15,18]], [[[2]]], [[[3]]],
-      ([([1], [[1]])], [([1], [[1]])], [([[1]], [[1]])], [([[1]], [[1]])]
-      ,([1], [[1]])
-      )
-    )
+initialCalcs  = {
+    firstList = [1,2,3]
+  , secLoop = [[4,5,6]]
+  , thrLoop = [[7,8,9]]
+  , ansLoop = [[12,15,18]]
+  , twoListPerms            = [[[2]]]
+  , threeListPerms          = [[[3]]]
+  , ansPlusList             = [([1], [[1]])]
+  , specificAnswer          = [([1], [[1]])]
+  , ansPermsPlusList        = [([[1]], [[1]])]
+  , specificAnswerPlusList  = [([[1]], [[1]])]
+  , findAnswerLazy3         = ([1], [[1]])
+  }
+
+    -- [[[2]]], [[[3]]],
+    --   ([([1], [[1]])], [([1], [[1]])], [([[1]], [[1]])], [([[1]], [[1]])]
+    --   ,([1], [[1]])
+    --   )
+
+
+--     type alias ModelResults = {
+--     firstList : WheelPosition
+--   , secLoop : WheelLoop
+--   , thrLoop : WheelLoop
+--   , ansLoop : WheelLoop
+--   , twoListPerms            : List LoopsPermutation
+--   , threeListPerms          : List LoopsPermutation
+--   , ansPlusList             : List (LoopsPermAnswers, LoopsPermutation)
+--   , specificAnswer          : List (LoopsPermAnswers, LoopsPermutation)
+--   , ansPermsPlusList        : List (LoopsAnswerLoop, LoopsPermutation)
+--   , specificAnswerPlusList  : List (LoopsAnswerLoop, LoopsPermutation)
+--   , findAnswerLazy3         : (LoopsPermAnswers, LoopsPermutation)
+-- }
+
 
 initialModelState =
   ([],
