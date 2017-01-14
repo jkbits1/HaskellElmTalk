@@ -24,9 +24,9 @@ type alias ModelButtons = List Bool
 -- values generated from UI input
 type alias ModelResults = {
     firstList : WheelPosition
-  , secLoop : WheelLoop
-  , thrLoop : WheelLoop
-  , ansLoop : WheelLoop
+  , secLoop   : WheelLoop
+  , thrLoop   : WheelLoop
+  , ansLoop   : WheelLoop
   , twoListPerms            : List LoopsPermutation
   , threeListPerms          : List LoopsPermutation
   , ansPlusList             : List (LoopsPermAnswers, LoopsPermutation)
@@ -54,6 +54,17 @@ type Msg =
       Rotate1 |
       Rotate2 |
       Rotate3
+
+-- model helper functions
+modelInputs : Model -> ModelInputs
+modelInputs (_, inputs, _, _) = inputs
+
+input1 : ModelInputs -> String
+input1 inputs = inputs.s1
+input2 inputs = inputs.s2
+input3 inputs = inputs.s3
+input4 inputs = inputs.s4
+
 
 -- BUTTONS START
 buttonVal : List Bool -> Int -> Bool
@@ -121,7 +132,7 @@ wheelOnlyRow idx wheelLabel wheelData =
         ]
 
 wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
-    div [ classList [("row", True),("wheelRow", True)] ] 
+    div [ classList [("row", True), ("wheelRow", True)] ] 
         [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
         , div [ class "col-sm-2 wheelRowData"  ] [ text <| wheelData ]
         , div [ class "col-sm-1 plusAdjust"    ] [ showButtonToggleLoop ("+", "-") hide action ]
@@ -233,16 +244,15 @@ view ( modelHistory
               [ rotButton "1" Rotate1, rotButton "2" Rotate2, rotButton "3" Rotate3 ]
         
         , div [id "chart"] []
-
         , br [] []
 
         , div [classList [("wheelCalcs", True)]] 
               [ wheelOnlyRow  1 "Wheel 1"                       s1
               , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonValue 2
               , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonValue 3
-              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4 ]
+              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4 
+              ]
         ]
-
     , br [] []
 
     , div 
@@ -340,18 +350,14 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
     case update of
       NoOp        ->    (createModel inputs buttonList True, Cmd.none)
 
-      Back        ->    (createModel inputs states False, 
-                            Cmd.none
-                            -- showWheel [ wd1, wd2, wd3, wd4  ] 
-                            )
+      Back        ->    (createModel inputs states False, Cmd.none -- showWheel [ wd1, wd2, wd3, wd4  ]                             
+                        )
 
-      -- Circle1Field s -> (createModel { inputs | count = newCount, s1 = s } buttonList True, showWheel [ d3DataFromString s, wd2, wd3, wd4  ] )
       Circle1Field s -> createModelCircle { inputs | count = newCount, s1 = s } [ d3DataFromString s, wd2, wd3, wd4 ]
       Circle2Field s -> createModelCircle { inputs | count = newCount, s2 = s } [ wd1, d3DataFromString s, wd3, wd4 ]
       Circle3Field s -> createModelCircle { inputs | count = newCount, s3 = s } [ wd1, wd2, d3DataFromString s, wd4 ]
       Circle4Field s -> createModelCircle { inputs | count = newCount, s4 = s } [ wd1, wd2, wd3, d3DataFromString s ]
 
-      -- ShowAns     ->    (createModel { inputs | count = newCount } (buttonListToggle buttonList 1) True, Cmd.none)
       ShowAns     ->    (createModelShow 1, Cmd.none)
       ShowLoop2   ->    (createModelShow 2, Cmd.none)
       ShowLoop3   ->    (createModelShow 3, Cmd.none)
@@ -365,11 +371,6 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
 
       ChangeWheel ->    (mdl, showWheel [ wd1, wd2, wd3, wd4  ] )
 
-      -- currently a no-op
-      D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
-
-      -- Rotate1 -> (createModel { inputs | count = i, s1 = rotateNumsString s1 } buttonList True,
-      --               showWheel [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ])
       Rotate1 -> createModelCircle  { inputs | count = i, s1 = rotateNumsString s1 } 
                                     [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ]
 
@@ -378,14 +379,16 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
 
       Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotateNumsString s3 }
                                     [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ]
+      -- currently a no-op
+      D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
 
 initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
 initialStates = [False, False, False, False, False, False, False, False, False, False]
 initialCalcs  = {
     firstList = [1,2,3]
-  , secLoop = [[4,5,6]]
-  , thrLoop = [[7,8,9]]
-  , ansLoop = [[12,15,18]]
+  , secLoop   = [[4,5,6]]
+  , thrLoop   = [[7,8,9]]
+  , ansLoop   = [[12,15,18]]
   , twoListPerms            = [[[2]]]
   , threeListPerms          = [[[3]]]
   , ansPlusList             = [([1], [[1]])]
@@ -413,35 +416,16 @@ init =
     (model, showWheel [ wd1, wd2, wd3, wd4 ] )
 
 
--- type signatures have to come directly before fn, which ruins readability, 
--- so they are commented out.
--- input1 : ModelInputs -> String
--- input2 : ModelInputs -> String
--- input3 : ModelInputs -> String
--- input4 : ModelInputs -> String
-input1 inputs = inputs.s1
-input2 inputs = inputs.s2
-input3 inputs = inputs.s3
-input4 inputs = inputs.s4
-
-modelInputs : Model -> ModelInputs
-modelInputs
-      ( modelHistory,
-        inputs,
-        buttonList,
-        results
-      ) = inputs
-
-wheelData : Model -> (ModelInputs -> String ) -> List Int
+wheelData : Model -> (ModelInputs -> String ) -> WheelPosition
 wheelData model inp = wheelPositionFromString <| inp <| modelInputs model
 
-resultsToD3Data : List Int -> List { name: String }
+resultsToD3Data : WheelPosition -> List { name: String }
 resultsToD3Data xs = List.map (\x -> { name = (toString x) }) xs
 
 d3DataFromString : String -> List { name: String }
 d3DataFromString = (\s -> resultsToD3Data <| wheelPositionFromString s)
 
-wheelText : List Int -> String
+wheelText : WheelPosition -> String
 wheelText xs = String.join ", " <| List.map (\x -> toString x) xs
 
 rotateNumsString s = wheelText <| turnWheel (wheelPositionFromString s) 1
