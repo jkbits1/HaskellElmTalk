@@ -241,49 +241,35 @@ view ( modelHistory
               , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonValue 2
               , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonValue 3
               , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4 ]
-          ]
+        ]
 
-        , br [] []
+    , br [] []
 
-  , div [ classList [("answers", True)]] 
-        [ div [
-      class "container"
-      ]
-      [
-          div [
-          class "row"
-          ] [
-              div [
-              ] [ foundAnswerIndicator specificAnswer True
-              ]
-          ]
+    , div 
+        [ classList [("answers", True)]] 
+        [ div 
+            [ class "container" ]
+            [ div [ class "row" ] [ div [] [ foundAnswerIndicator specificAnswer True ] ]
+            , div [ class "row" ] [ div [] [ puzzleSolvedIndicator s1 s2 s3 s4 ] ]
+            , br [] []
 
-        , div [
-          class "row"
-          ] [
-              div [
-              ] [ puzzleSolvedIndicator s1 s2 s3 s4
-              ]
-          ]
+            , infoRow "2 Loop Perms"  (toString twoListPerms)     <| buttonValue 5
+            , infoRow "3 Loop Perms"  (toString threeListPerms)   <| buttonValue 6
+            , infoRow "answersPlus"   (toString ansPlusList )     <| buttonValue 1
+            , br [] []
 
-        , br [] []
-        , infoRow "2 Loop Perms"  (toString twoListPerms)   <| buttonValue 5
-        , infoRow "3 Loop Perms"  (toString threeListPerms) <| buttonValue 6
-        , infoRow "answersPlus"   (toString ansPlusList )   <| buttonValue 1
+            , infoRow "findAnswers"   (toString specificAnswer)   <| buttonValue 1
+            , infoRow "lazyAnswer - " (toString findAnswerLazy3)  <| buttonValue 1
+            , infoRow ("State change count: " ++ (toString i)) (toString modelHistory) 
+                                                                  <| buttonValue 7
 
-        , br [] []
-
-        , infoRow "findAnswers"   (toString specificAnswer )   <| buttonValue 1
-
-        , infoRow "lazyAnswer - " (toString findAnswerLazy3) <| buttonValue 1
-        , infoRow ("State change count: " ++ (toString i)) (toString modelHistory) <| buttonValue 7
-
-        , div [ style <| textStyle ++ (displayStyle False)] [ text ("answersPerms - " ++ (toString ansPermsPlusList)) ]
-        , div [ style <| textStyle ++ (displayStyle False)] [ text ("displayAnswer - " ++ (toString specificAnswerPlusList)) ]
-
-      ]
+            , div [ style <| textStyle ++ (displayStyle False)] 
+                  [ text ("answersPerms - " ++ (toString ansPermsPlusList)) ]
+            , div [ style <| textStyle ++ (displayStyle False)] 
+                  [ text ("displayAnswer - " ++ (toString specificAnswerPlusList)) ]
+            ]
+        ]
     ]
-  ]
 
 -- outgoing port to js
 port showWheel : List (List WheelItem) -> Cmd msg
@@ -468,8 +454,7 @@ currentAnswers s1 s2 s3 s4 =
              )
 
 puzzleSolved : String -> String -> String -> String -> Bool
-puzzleSolved s1 s2 s3 s4 =
-  currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
+puzzleSolved s1 s2 s3 s4 = currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
 
 puzzleSolvedIndicator : String -> String -> String -> String -> Html Msg
 puzzleSolvedIndicator s1 s2 s3 s4 =
@@ -482,8 +467,7 @@ puzzleSolvedIndicator s1 s2 s3 s4 =
   in
     div [ class "solvedPuzzle" ] 
         [ text <| "Puzzle solved? - "
-        , span  [ style <| colorStyle <| solved ] 
-                [ text <| solvedString ]
+        , span  [ style <| colorStyle <| solved ] [ text <| solvedString ]
         ]
 
 colorStyle : Bool -> List (String, String)
