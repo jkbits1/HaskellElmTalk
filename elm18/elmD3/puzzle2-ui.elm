@@ -55,6 +55,7 @@ type Msg =
       Rotate2 |
       Rotate3
 
+-- BUTTONS START
 buttonVal : List Bool -> Int -> Bool
 buttonVal buttonlist num = Maybe.withDefault False <| head <| drop (num - 1) buttonlist
 
@@ -66,9 +67,7 @@ emptyClassList      = classList []
 textButtonClassList = classList [ ("textButton", True) ]
 
 showButtonBasic action classList label =
-  Html.button
-    [ classList, Html.Events.onClick action ]
-    [ Html.text label ]
+  Html.button [ classList, Html.Events.onClick action ] [ Html.text label ]
 
 uiButton : Msg -> String -> Html Msg
 uiButton action label = showButtonBasic action emptyClassList <| label
@@ -77,16 +76,14 @@ backButton : Html Msg
 backButton = uiButton Back "Step Back"
 
 rotButton labelNum action =
-  div [ class "rotButton" ] 
-      [ uiButton action <| "Rotate " ++ labelNum ]
+  div [ class "rotButton" ] [ uiButton action <| "Rotate " ++ labelNum ]
 
 showButtonToggle action classList labels hide = 
   let
     labelChoice labels hide = 
-      if hide == True then
-        Tuple.second labels
-      else
-        Tuple.first labels
+      case hide of 
+        True  -> Tuple.second labels
+        False -> Tuple.first labels
   in
     showButtonBasic action classList <| labelChoice labels hide
 
@@ -98,6 +95,7 @@ answersButton hide  = showButtonToggleText ("Show Answers", "Hide Answers") hide
 stateButton   hide  = showButtonToggleText ("Show State",   "Hide State")   hide ShowState
 perms2Button  hide  = showButtonToggleText ("Show Perms 2", "Hide Perms 2") hide ShowPerms2
 perms3Button  hide  = showButtonToggleText ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
+-- BUTTONS END
 
 inputField2 : String -> String -> String ->
               (String -> Msg) ->
@@ -110,64 +108,40 @@ inputField2 idVal default text updateItem inputStyle =
 
 formGroup : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
 formGroup lbl idVal val updateItem style msg =
-  div [ class "wheelInput" ] [
-    label [
-      for idVal
-      , classList [("control-label", True), ("col-sm-4", True), ("wheelInputLabel", True)]
-      ] 
-      [ text <| "Wheel " ++ lbl ]
-  , inputField2 idVal lbl val updateItem style
-  ]
-
-wheelOnlyRow idx wheelLabel wheelData =
-    div [ class "row" ] [
-      div [ class "col-sm-2 wheelRowLabel" ] 
-          [ text wheelLabel ]
-    , div [ class "col-sm-2 wheelRowData" ] [ text <| wheelData ]
-    ]
-
-wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
-    div [
-      classList [("row", True),("wheelRow", True)]
-      ] [
-
-        div [
-          class "col-sm-2 wheelRowLabel"
-        ] [ text wheelLabel ]
-      , div [
-      class "col-sm-2 wheelRowData"
-      ] [ text <| wheelData ]
-      , div [
-      class "col-sm-1 plusAdjust"
-      ] [ showButtonToggleLoop ("+", "-") hide action ]
-      , div [
-        class "col-sm-2", style <| (displayStyle hide) ++ [("font-weight", "700")]
-        ] [
-        text loopLabel
+  div [ class "wheelInput" ] 
+      [ label [ for idVal, classList [("control-label", True), ("col-sm-4", True), ("wheelInputLabel", True)] ] 
+              [ text <| "Wheel " ++ lbl ]
+      , inputField2 idVal lbl val updateItem style
       ]
 
-      , div [
-        class "col-sm-2 loopDataAdjust", style <| displayStyle hide
-        ] [ text loopData ]
-    ]
+wheelOnlyRow idx wheelLabel wheelData =
+    div [ class "row" ] 
+        [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
+        , div [ class "col-sm-2 wheelRowData" ]  [ text <| wheelData ]
+        ]
+
+wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
+    div [ classList [("row", True),("wheelRow", True)] ] 
+        [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
+        , div [ class "col-sm-2 wheelRowData"  ] [ text <| wheelData ]
+        , div [ class "col-sm-1 plusAdjust"    ] [ showButtonToggleLoop ("+", "-") hide action ]
+        , div [ class "col-sm-2", style <| (displayStyle hide) ++ [("font-weight", "700")] ] 
+                                                 [ text loopLabel ]
+        , div [ class "col-sm-2 loopDataAdjust", style <| displayStyle hide ] 
+                                                 [ text loopData ]
+        ]
 
 foundAnswerIndicator : List (a,b) -> Bool -> Html Msg
 foundAnswerIndicator answerList show =
   let
     found = not <| length answerList == 0
     foundString =
-      if found then
-        "Yes"
-      else
-        "No"
+      case found of 
+        True  -> "Yes"
+        False -> "No"
   in
     div [ class "foundAnswer", style <| (displayStyle show) ]
-    [ text <| "Does solution exist? - "
-    , span [ style <| colorStyle <| found ] [
-        text <| foundString
-      ]
-    ]
-
+        [ text <| "Does solution exist? - " , span [ style <| colorStyle <| found ] [ text <| foundString ] ]
 
 myStyle : List (String, String)
 myStyle = []
@@ -182,19 +156,10 @@ displayStyle show =
     False ->  [("display", "none")]
 
 infoRow label info displayState =
-  div [
-  class "row",
-        style
-                      (displayStyle displayState)
-  ] [
-    div [
-      class "col-sm-2 wheelRowLabel"
-      ] [ text label ]
-  , div [
-      class "col-sm-8 permsData"
-    ] [ text <| info ]
-  ]
-
+  div [ class "row", style (displayStyle displayState) ] 
+      [ div [ class "col-sm-2 wheelRowLabel" ] [ text label ]
+      , div [ class "col-sm-8 permsData" ]     [ text <| info ]
+      ]
 
 -- converts Signal Model to Signal Html, using non-signal view
 --main : Signal Html
@@ -237,70 +202,51 @@ view ( modelHistory
     findAnswerLazy3         = results.findAnswerLazy3
     buttonValue = buttonVal buttonList
   in
-  div [] [
-  div [
-    class "container"
-    ]
-  [
-         div [
-         class "row title"
-         ] [
-          h2 [] [text "Elm Puzzle Calculator"]
-         ]
+  div 
+    [] 
+    [ div 
+        [ class "container" ]
+        [ div [ class "row title"] [ h2 [] [ text "Elm Puzzle Calculator" ] ]
+        , div 
+            [ class "row" ] 
+            [ div [ class "btn-group" ] 
+                  [ perms2Button  <| buttonValue 5
+                  , perms3Button  <| buttonValue 6
+                  , answersButton <| buttonValue 1 ]
+            , div [ classList [("btn-group", True), ("stateButton", True)] ] 
+                  [ backButton, stateButton <| buttonValue 7 ]
+            ]
+        , br [] []
 
-       , div [
-          class "row"
-          ] [
-          div [
-            class "btn-group"
-            ] [
-              perms2Button  <| buttonValue 5
-            , perms3Button  <| buttonValue 6
-            , answersButton <| buttonValue 1
+        , Html.form 
+            [ classList [("wheelsForm", True), ("form-inline", True) ] ]
+            [ div [] 
+                  [ formGroup "1" "wheel1input"     s1 Circle1Field myStyle Rotate1
+                  , formGroup "2" "wheel2input"     s2 Circle2Field myStyle Rotate2
+                  ]
+            , div [] 
+                  [ formGroup "3" "wheel3input"     s3 Circle3Field myStyle Rotate3
+                  , formGroup "Ans" "wheelAnsInput" s4 Circle4Field myStyle Rotate1
+                  ] 
+            ]
+        , div [classList [("rotBtns", True)]] 
+              [ rotButton "1" Rotate1, rotButton "2" Rotate2, rotButton "3" Rotate3 ]
+        
+        , div [id "chart"] []
+
+        , br [] []
+
+        , div [classList [("wheelCalcs", True)]] 
+              [ wheelOnlyRow  1 "Wheel 1"                       s1
+              , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonValue 2
+              , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonValue 3
+              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4 ]
           ]
-        , div [
-            classList [("btn-group", True), ("stateButton", True)]
-          ] [
-            backButton
-          , stateButton <| buttonValue 7
-        ]
-      ]
-    , br [] []
 
-    , Html.form [
-          classList [("wheelsForm", True), ("form-inline", True) ]
-        ] [
-            div [] [
-            formGroup "1" "wheel1input"     s1 Circle1Field myStyle Rotate1
-          , formGroup "2" "wheel2input"     s2 Circle2Field myStyle Rotate2
-          ]
-          , div [] [
-            formGroup "3" "wheel3input"     s3 Circle3Field myStyle Rotate3
-          , formGroup "Ans" "wheelAnsInput" s4 Circle4Field myStyle Rotate1
-          ]
-        ]
-    , div [classList [("rotBtns", True)]] [
-          rotButton "1" Rotate1
-        , rotButton "2" Rotate2
-        , rotButton "3" Rotate3
-      ]
-    , div [id "chart"
-      ] []
+        , br [] []
 
-    , br [] []
-
-    , div [classList [("wheelCalcs", True)]] [
-        wheelOnlyRow  1 "Wheel 1"                       s1
-      , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonValue 2
-      , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonValue 3
-      , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4
-    ]
-  ]
-
-  , br [] []
-
-  , div [ classList [("answers", True)]] [
-      div [
+  , div [ classList [("answers", True)]] 
+        [ div [
       class "container"
       ]
       [
@@ -371,10 +317,9 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
         s3 = inputs.s3
         s4 = inputs.s4
         newHistory =
-          if forward == True then
-            (inputs, buttonStates) :: modelHistory
-          else
-            tailHistory
+          case forward of 
+            True  -> (inputs, buttonStates) :: modelHistory
+            False -> tailHistory
 
         first     = wheelPositionFromString s1
         answers   = wheelPositionFromString s4
@@ -531,17 +476,15 @@ puzzleSolvedIndicator s1 s2 s3 s4 =
   let
     solved = (puzzleSolved s1 s2 s3 s4)
     solvedString =
-      if solved then
-        "Yes"
-      else
-        "No " ++ (toString <| currentAnswers s1 s2 s3 s4)
+      case solved of 
+        True  -> "Yes"
+        False -> "No " ++ (toString <| currentAnswers s1 s2 s3 s4)
   in
-    div [ class "solvedPuzzle" ] [
-      text <| "Puzzle solved? - "
-    , span [ style <| colorStyle <| solved ] [
-        text <| solvedString
-      ]
-    ]
+    div [ class "solvedPuzzle" ] 
+        [ text <| "Puzzle solved? - "
+        , span  [ style <| colorStyle <| solved ] 
+                [ text <| solvedString ]
+        ]
 
 colorStyle : Bool -> List (String, String)
 colorStyle success =
