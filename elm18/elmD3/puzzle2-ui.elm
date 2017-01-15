@@ -117,31 +117,47 @@ inputField2 idVal default text updateItem inputStyle =
     , id idVal, class "form-control col-sm-2 wheelStyle"
     ] []
 
-formGroup : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
-formGroup lbl idVal val updateItem style msg =
+
+formGroupBasic : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
+formGroupBasic lbl idVal val updateItem style msg =
   div [ class "wheelInput" ] 
       [ label [ for idVal, classList [("control-label", True), ("col-sm-4", True), ("wheelInputLabel", True)] ] 
               [ text <| "Wheel " ++ lbl ]
       , inputField2 idVal lbl val updateItem style
       ]
 
+formGroup : String -> String -> String -> (String -> Msg) -> Msg -> Html Msg
+formGroup lbl idVal val updateItem msg = formGroupBasic lbl idVal val updateItem [] msg
+
 wheelOnlyRow idx wheelLabel wheelData =
     div [ class "row" ] 
         [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
-        , div [ class "col-sm-2 wheelRowData" ]  [ text <| wheelData ]
+        , div [ class "col-sm-2 wheelRowData" ]  [ text wheelData ]
         ]
 
 wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
     div [ classList [("row", True), ("wheelRow", True)] ] 
         [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
-        , div [ class "col-sm-2 wheelRowData"  ] [ text <| wheelData ]
+        , div [ class "col-sm-2 wheelRowData"  ] [ text wheelData ]
         , div [ class "col-sm-1 plusAdjust"    ] [ showButtonToggleLoop ("+", "-") hide action ]
-        , div [ class "col-sm-2", style <| (displayStyle hide) ++ [("font-weight", "700")] ] 
+        , div [ class "col-sm-2", style <| (displayItem hide) ++ [("font-weight", "700")] ] 
                                                  [ text loopLabel ]
-        , div [ class "col-sm-2 loopDataAdjust", style <| displayStyle hide ] 
-                                                 [ text loopData ]
+        , div [ class "col-sm-2 loopDataAdjust", style <| displayItem hide ] 
+                                                 [ text <| toString loopData ]
         ]
 
+displayItem : Bool -> List (String, String)
+displayItem show =
+  case show of
+    True ->   [("display", "block")]
+    False ->  [("display", "none")]
+
+infoRow label info displayState =
+  div [ class "row", style (displayItem displayState) ] 
+      [ div [ class "col-sm-2 wheelRowLabel" ] [ text label ]
+      , div [ class "col-sm-8 permsData" ]     [ text <| toString info ]
+      ]
+      
 foundAnswerIndicator : List (a,b) -> Bool -> Html Msg
 foundAnswerIndicator answerList show =
   let
@@ -151,26 +167,11 @@ foundAnswerIndicator answerList show =
         True  -> "Yes"
         False -> "No"
   in
-    div [ class "foundAnswer", style <| (displayStyle show) ]
+    div [ class "foundAnswer", style <| displayItem show ]
         [ text <| "Does solution exist? - " , span [ style <| colorStyle <| found ] [ text <| foundString ] ]
-
-myStyle : List (String, String)
-myStyle = []
 
 textStyle : List (String, String)
 textStyle = []
-
-displayStyle : Bool -> List (String, String)
-displayStyle show =
-  case show of
-    True ->   [("display", "block")]
-    False ->  [("display", "none")]
-
-infoRow label info displayState =
-  div [ class "row", style (displayStyle displayState) ] 
-      [ div [ class "col-sm-2 wheelRowLabel" ] [ text label ]
-      , div [ class "col-sm-8 permsData" ]     [ text <| info ]
-      ]
 
 -- converts Signal Model to Signal Html, using non-signal view
 --main : Signal Html
@@ -232,12 +233,12 @@ view ( modelHistory
         , Html.form 
             [ classList [("wheelsForm", True), ("form-inline", True) ] ]
             [ div [] 
-                  [ formGroup "1" "wheel1input"     s1 Circle1Field myStyle Rotate1
-                  , formGroup "2" "wheel2input"     s2 Circle2Field myStyle Rotate2
+                  [ formGroup "1"   "wheel1input"   s1 Circle1Field Rotate1
+                  , formGroup "2"   "wheel2input"   s2 Circle2Field Rotate2
                   ]
             , div [] 
-                  [ formGroup "3" "wheel3input"     s3 Circle3Field myStyle Rotate3
-                  , formGroup "Ans" "wheelAnsInput" s4 Circle4Field myStyle Rotate1
+                  [ formGroup "3"   "wheel3input"   s3 Circle3Field Rotate3
+                  , formGroup "Ans" "wheelAnsInput" s4 Circle4Field Rotate1
                   ] 
             ]
         , div [classList [("rotBtns", True)]] 
@@ -248,9 +249,9 @@ view ( modelHistory
 
         , div [classList [("wheelCalcs", True)]] 
               [ wheelOnlyRow  1 "Wheel 1"                       s1
-              , wheelRow      2 "Wheel 2"   "Loop 2"            s2 (toString secLoop) ShowLoop2   <| buttonValue 2
-              , wheelRow      3 "Wheel 3"   "Loop 3"            s3 (toString thrLoop) ShowLoop3   <| buttonValue 3
-              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 (toString ansLoop) ShowLoopAns <| buttonValue 4 
+              , wheelRow      2 "Wheel 2"   "Loop 2"            s2 secLoop ShowLoop2   <| buttonValue 2
+              , wheelRow      3 "Wheel 3"   "Loop 3"            s3 thrLoop ShowLoop3   <| buttonValue 3
+              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 ansLoop ShowLoopAns <| buttonValue 4 
               ]
         ]
     , br [] []
@@ -263,20 +264,21 @@ view ( modelHistory
             , div [ class "row" ] [ div [] [ puzzleSolvedIndicator s1 s2 s3 s4 ] ]
             , br [] []
 
-            , infoRow "2 Loop Perms"  (toString twoListPerms)     <| buttonValue 5
-            , infoRow "3 Loop Perms"  (toString threeListPerms)   <| buttonValue 6
-            , infoRow "answersPlus"   (toString ansPlusList )     <| buttonValue 1
+            , infoRow "2 Loop Perms"  twoListPerms     <| buttonValue 5
+            , infoRow "3 Loop Perms"  threeListPerms   <| buttonValue 6
+            , infoRow "answersPlus"   ansPlusList      <| buttonValue 1
             , br [] []
 
-            , infoRow "findAnswers"   (toString specificAnswer)   <| buttonValue 1
-            , infoRow "lazyAnswer - " (toString findAnswerLazy3)  <| buttonValue 1
-            , infoRow ("State change count: " ++ (toString i)) (toString modelHistory) 
-                                                                  <| buttonValue 7
+            , infoRow "findAnswers"   specificAnswer   <| buttonValue 1
+            , infoRow "lazyAnswer - " findAnswerLazy3  <| buttonValue 1
+            , infoRow ("State change count: " ++ (toString i)) 
+                                      modelHistory     <| buttonValue 7
 
-            , div [ style <| textStyle ++ (displayStyle False)] 
-                  [ text ("answersPerms - " ++ (toString ansPermsPlusList)) ]
-            , div [ style <| textStyle ++ (displayStyle False)] 
-                  [ text ("displayAnswer - " ++ (toString specificAnswerPlusList)) ]
+            -- may no longer be shown, some thought needed
+            -- , div [ style <| textStyle ++ (displayItem False)] 
+            --       [ text ("answersPerms - " ++ (toString ansPermsPlusList)) ]
+            -- , div [ style <| textStyle ++ (displayItem False)] 
+            --       [ text ("displayAnswer - " ++ (toString specificAnswerPlusList)) ]
             ]
         ]
     ]
