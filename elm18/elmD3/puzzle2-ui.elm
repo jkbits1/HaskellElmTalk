@@ -108,32 +108,42 @@ perms2Button  hide  = showButtonToggleText ("Show Perms 2", "Hide Perms 2") hide
 perms3Button  hide  = showButtonToggleText ("Show Perms 3", "Hide Perms 3") hide ShowPerms3 
 -- BUTTONS END
 
-inputField2 : String -> String -> String ->
+-- INPUTS START
+inputField : String -> String -> String ->
               (String -> Msg) ->
               List (String, String) -> Html Msg
-inputField2 idVal default text updateItem inputStyle =
+inputField idVal default text updateItem inputStyle =
   input
     [ placeholder default, Attr.value text, onInput updateItem
     , id idVal, class "form-control col-sm-2 wheelStyle"
     ] []
+-- INPUTS END
 
-
+-- FORMS START
 formGroupBasic : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
 formGroupBasic lbl idVal val updateItem style msg =
   div [ class "wheelInput" ] 
       [ label [ for idVal, class "control-label col-sm-4 wheelInputLabel" ] 
               [ text <| "Wheel " ++ lbl ]
-      , inputField2 idVal lbl val updateItem style
+      , inputField idVal lbl val updateItem style
       ]
 
 formGroup : String -> String -> String -> (String -> Msg) -> Msg -> Html Msg
 formGroup lbl idVal val updateItem msg = formGroupBasic lbl idVal val updateItem [] msg
+-- FORMS END
 
+-- ROWS START
 wheelOnlyRow idx wheelLabel wheelData =
     div [ class "row" ] 
         [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
         , div [ class "col-sm-2 wheelRowData" ]  [ text wheelData ]
         ]
+
+displayItem : Bool -> List (String, String)
+displayItem show =
+  case show of
+    True ->   [("display", "block")]
+    False ->  [("display", "none")]
 
 wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
     div [ class "row wheelRow" ] 
@@ -146,18 +156,27 @@ wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
                                                  [ text <| toString loopData ]
         ]
 
-displayItem : Bool -> List (String, String)
-displayItem show =
-  case show of
-    True ->   [("display", "block")]
-    False ->  [("display", "none")]
-
 infoRow label info displayState =
   div [ class "row", style (displayItem displayState) ] 
       [ div [ class "col-sm-2 wheelRowLabel" ] [ text label ]
       , div [ class "col-sm-8 permsData" ]     [ text <| toString info ]
       ]
-      
+
+indicatorRow indicator = div [ class "row" ] [ div [] [ indicator ] ]
+
+-- ROWS END
+
+-- INDICATORS
+currentAnswers s1 s2 s3 s4 =
+             (List.map sumColumn <| PuzzleModule.zip3
+               (wheelPositionFromString s1)
+               (wheelPositionFromString s2)
+               (wheelPositionFromString s3)
+             )
+
+puzzleSolved : String -> String -> String -> String -> Bool
+puzzleSolved s1 s2 s3 s4 = currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
+
 solvedColor : Bool -> List (String, String)
 solvedColor success =
   let 
@@ -179,9 +198,6 @@ foundAnswerIndicator answerList show =
     div [ class "foundAnswer", style <| displayItem show ]
         [ text <| "Does solution exist? - " , span [ style <| solvedColor <| found ] [ text <| foundString ] ]
 
-puzzleSolved : String -> String -> String -> String -> Bool
-puzzleSolved s1 s2 s3 s4 = currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
-
 puzzleSolvedIndicator : String -> String -> String -> String -> Html Msg
 puzzleSolvedIndicator s1 s2 s3 s4 =
   let
@@ -195,9 +211,6 @@ puzzleSolvedIndicator s1 s2 s3 s4 =
         [ text <| "Puzzle solved? - "
         , span  [ style <| solvedColor <| solved ] [ text <| solvedString ]
         ]
-
--- textStyle : List (String, String)
--- textStyle = []
 
 
 -- converts Signal Model to Signal Html, using non-signal view
@@ -287,16 +300,17 @@ view ( modelHistory
         [ class "answers"] 
         [ div 
             [ class "container" ]
-            [ div [ class "row" ] [ div [] [ foundAnswerIndicator specificAnswer True ] ]
-            , div [ class "row" ] [ div [] [ puzzleSolvedIndicator s1 s2 s3 s4 ] ]
+            [ 
+              indicatorRow <| foundAnswerIndicator specificAnswer True
+            , indicatorRow <| puzzleSolvedIndicator s1 s2 s3 s4
             , br [] []
 
             , infoRow "2 Loop Perms"  twoListPerms     <| buttonValue 5
             , infoRow "3 Loop Perms"  threeListPerms   <| buttonValue 6
-            , infoRow "answersPlus"   ansPlusList      <| buttonValue 1
+            , infoRow "findAnswers"   specificAnswer   <| buttonValue 1
             , br [] []
 
-            , infoRow "findAnswers"   specificAnswer   <| buttonValue 1
+            , infoRow "answersPlus"   ansPlusList      <| buttonValue 1
             , infoRow "lazyAnswer - " findAnswerLazy3  <| buttonValue 1
             , infoRow ("State change count: " ++ (toString i)) 
                                       modelHistory     <| buttonValue 7
@@ -322,6 +336,7 @@ port showWheel : List (List WheelItem) -> Cmd msg
 --                    initialModelState
 --                    updatesChnl.signal
 
+
 -- converts Update to new Model
 updateModel : Msg -> Model -> (Model, Cmd Msg)
 updateModel update ( modelHistory, inputs, buttonList, results ) =
@@ -334,6 +349,14 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
     newCount   = i + 1
     (inputs, states) = Maybe.withDefault (initialInputs, initialStates) <| head modelHistory
     tailHistory      = Maybe.withDefault [] <| tail modelHistory
+
+    -- d3DataFromString : String -> List { name: String }
+    d3DataFromString = (\s -> resultsToD3Data <| wheelPositionFromString s)
+
+    -- wheelText : WheelPosition -> String
+    wheelText xs = String.join ", " <| List.map (\x -> toString x) xs
+
+    rotateNumsString s = wheelText <| turnWheel (wheelPositionFromString s) 1
 
     createModel inputs buttonStates forward =
       let
@@ -376,6 +399,10 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
 
     createModelShow buttonNum = 
       createModel { inputs | count = newCount } (buttonListToggle buttonList buttonNum) True
+
+    rotS1 = rotateNumsString s1
+    rotS2 = rotateNumsString s2
+    rotS3 = rotateNumsString s3
   in
     case update of
       NoOp        ->    (createModel inputs buttonList True, Cmd.none)
@@ -401,14 +428,9 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
 
       ChangeWheel ->    (mdl, showWheel [ wd1, wd2, wd3, wd4  ] )
 
-      Rotate1 -> createModelCircle  { inputs | count = i, s1 = rotateNumsString s1 } 
-                                    [ d3DataFromString <| rotateNumsString s1, wd2, wd3, wd4 ]
-
-      Rotate2 -> createModelCircle  { inputs | count = i, s2 = rotateNumsString s2 }
-                                    [ wd1, d3DataFromString <| rotateNumsString s2, wd3, wd4 ]
-
-      Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotateNumsString s3 }
-                                    [ wd1, wd2, d3DataFromString <| rotateNumsString s3, wd4 ]
+      Rotate1 -> createModelCircle  { inputs | count = i, s1 = rotS1 } [ d3DataFromString rotS1, wd2, wd3, wd4 ]
+      Rotate2 -> createModelCircle  { inputs | count = i, s2 = rotS2 } [ wd1, d3DataFromString rotS2, wd3, wd4 ]
+      Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotS3 } [ wd1, wd2, d3DataFromString rotS3, wd4 ]
       -- currently a no-op
       D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
 
@@ -452,19 +474,5 @@ wheelData model inp = wheelPositionFromString <| inp <| modelInputs model
 resultsToD3Data : WheelPosition -> List { name: String }
 resultsToD3Data xs = List.map (\x -> { name = (toString x) }) xs
 
-d3DataFromString : String -> List { name: String }
-d3DataFromString = (\s -> resultsToD3Data <| wheelPositionFromString s)
-
-wheelText : WheelPosition -> String
-wheelText xs = String.join ", " <| List.map (\x -> toString x) xs
-
-rotateNumsString s = wheelText <| turnWheel (wheelPositionFromString s) 1
-
-currentAnswers s1 s2 s3 s4 =
-             (List.map sumColumn <| PuzzleModule.zip3
-               (wheelPositionFromString s1)
-               (wheelPositionFromString s2)
-               (wheelPositionFromString s3)
-             )
 
 
