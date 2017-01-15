@@ -75,7 +75,7 @@ maxButton = 10
 buttonListToggle list num = take (num-1) list ++ [not <| buttonVal list num] ++ take (maxButton - num) (drop num list)
 
 emptyClassList      = classList []
-textButtonClassList = classList [ ("textButton", True) ]
+textButtonClassList = class "textButton"
 
 showButtonBasic action classList label =
   Html.button [ classList, Html.Events.onClick action ] [ Html.text label ]
@@ -121,7 +121,7 @@ inputField2 idVal default text updateItem inputStyle =
 formGroupBasic : String -> String -> String -> (String -> Msg) -> List (String, String) -> Msg -> Html Msg
 formGroupBasic lbl idVal val updateItem style msg =
   div [ class "wheelInput" ] 
-      [ label [ for idVal, classList [("control-label", True), ("col-sm-4", True), ("wheelInputLabel", True)] ] 
+      [ label [ for idVal, class "control-label col-sm-4 wheelInputLabel" ] 
               [ text <| "Wheel " ++ lbl ]
       , inputField2 idVal lbl val updateItem style
       ]
@@ -136,7 +136,7 @@ wheelOnlyRow idx wheelLabel wheelData =
         ]
 
 wheelRow idx wheelLabel loopLabel wheelData loopData action hide =
-    div [ classList [("row", True), ("wheelRow", True)] ] 
+    div [ class "row wheelRow" ] 
         [ div [ class "col-sm-2 wheelRowLabel" ] [ text wheelLabel ]
         , div [ class "col-sm-2 wheelRowData"  ] [ text wheelData ]
         , div [ class "col-sm-1 plusAdjust"    ] [ showButtonToggleLoop ("+", "-") hide action ]
@@ -158,6 +158,15 @@ infoRow label info displayState =
       , div [ class "col-sm-8 permsData" ]     [ text <| toString info ]
       ]
       
+solvedColor : Bool -> List (String, String)
+solvedColor success =
+  let 
+    clrStyle color = [("color", color)]
+  in
+  case success of
+    True  -> clrStyle "green"
+    False -> clrStyle "red"
+
 foundAnswerIndicator : List (a,b) -> Bool -> Html Msg
 foundAnswerIndicator answerList show =
   let
@@ -168,10 +177,28 @@ foundAnswerIndicator answerList show =
         False -> "No"
   in
     div [ class "foundAnswer", style <| displayItem show ]
-        [ text <| "Does solution exist? - " , span [ style <| colorStyle <| found ] [ text <| foundString ] ]
+        [ text <| "Does solution exist? - " , span [ style <| solvedColor <| found ] [ text <| foundString ] ]
 
-textStyle : List (String, String)
-textStyle = []
+puzzleSolved : String -> String -> String -> String -> Bool
+puzzleSolved s1 s2 s3 s4 = currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
+
+puzzleSolvedIndicator : String -> String -> String -> String -> Html Msg
+puzzleSolvedIndicator s1 s2 s3 s4 =
+  let
+    solved = (puzzleSolved s1 s2 s3 s4)
+    solvedString =
+      case solved of 
+        True  -> "Yes"
+        False -> "No " ++ (toString <| currentAnswers s1 s2 s3 s4)
+  in
+    div [ class "solvedPuzzle" ] 
+        [ text <| "Puzzle solved? - "
+        , span  [ style <| solvedColor <| solved ] [ text <| solvedString ]
+        ]
+
+-- textStyle : List (String, String)
+-- textStyle = []
+
 
 -- converts Signal Model to Signal Html, using non-signal view
 --main : Signal Html
@@ -225,13 +252,13 @@ view ( modelHistory
                   [ perms2Button  <| buttonValue 5
                   , perms3Button  <| buttonValue 6
                   , answersButton <| buttonValue 1 ]
-            , div [ classList [("btn-group", True), ("stateButton", True)] ] 
+            , div [ class "btn-group stateButton" ] 
                   [ backButton, stateButton <| buttonValue 7 ]
             ]
         , br [] []
 
         , Html.form 
-            [ classList [("wheelsForm", True), ("form-inline", True) ] ]
+            [ class "wheelsForm form-inline" ]
             [ div [] 
                   [ formGroup "1"   "wheel1input"   s1 Circle1Field Rotate1
                   , formGroup "2"   "wheel2input"   s2 Circle2Field Rotate2
@@ -241,13 +268,13 @@ view ( modelHistory
                   , formGroup "Ans" "wheelAnsInput" s4 Circle4Field Rotate1
                   ] 
             ]
-        , div [classList [("rotBtns", True)]] 
+        , div [class "rotBtns"] 
               [ rotButton "1" Rotate1, rotButton "2" Rotate2, rotButton "3" Rotate3 ]
         
         , div [id "chart"] []
         , br [] []
 
-        , div [classList [("wheelCalcs", True)]] 
+        , div [class "wheelCalcs"] 
               [ wheelOnlyRow  1 "Wheel 1"                       s1
               , wheelRow      2 "Wheel 2"   "Loop 2"            s2 secLoop ShowLoop2   <| buttonValue 2
               , wheelRow      3 "Wheel 3"   "Loop 3"            s3 thrLoop ShowLoop3   <| buttonValue 3
@@ -257,7 +284,7 @@ view ( modelHistory
     , br [] []
 
     , div 
-        [ classList [("answers", True)]] 
+        [ class "answers"] 
         [ div 
             [ class "container" ]
             [ div [ class "row" ] [ div [] [ foundAnswerIndicator specificAnswer True ] ]
@@ -275,7 +302,8 @@ view ( modelHistory
                                       modelHistory     <| buttonValue 7
 
             -- may no longer be shown, some thought needed
-            -- , div [ style <| textStyle ++ (displayItem False)] 
+            -- --, div [ style <| textStyle ++ (displayItem False)] 
+            -- , div [ style <| [] ++ (displayItem False)] 
             --       [ text ("answersPerms - " ++ (toString ansPermsPlusList)) ]
             -- , div [ style <| textStyle ++ (displayItem False)] 
             --       [ text ("displayAnswer - " ++ (toString specificAnswerPlusList)) ]
@@ -439,29 +467,4 @@ currentAnswers s1 s2 s3 s4 =
                (wheelPositionFromString s3)
              )
 
-puzzleSolved : String -> String -> String -> String -> Bool
-puzzleSolved s1 s2 s3 s4 = currentAnswers s1 s2 s3 s4 == (wheelPositionFromString s4)
-
-puzzleSolvedIndicator : String -> String -> String -> String -> Html Msg
-puzzleSolvedIndicator s1 s2 s3 s4 =
-  let
-    solved = (puzzleSolved s1 s2 s3 s4)
-    solvedString =
-      case solved of 
-        True  -> "Yes"
-        False -> "No " ++ (toString <| currentAnswers s1 s2 s3 s4)
-  in
-    div [ class "solvedPuzzle" ] 
-        [ text <| "Puzzle solved? - "
-        , span  [ style <| colorStyle <| solved ] [ text <| solvedString ]
-        ]
-
-colorStyle : Bool -> List (String, String)
-colorStyle success =
-  let 
-    clrStyle color = [("color", color)]
-  in
-  case success of
-    True  -> clrStyle "green"
-    False -> clrStyle "red"
 
