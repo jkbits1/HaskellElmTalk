@@ -92,13 +92,13 @@ zip3 pos1 pos2 pos3 = map3 (,,) pos1 pos2 pos3
 headLLI : List WheelPosition -> WheelPosition
 headLLI = foldr (\h t -> h) []
 
-headLLIxx xs =
-  let
-    h = head xs
-  in
-    case h of
-      Just x  -> x
-      Nothing -> []
+-- headLLIxx xs =
+--   let
+--     h = head xs
+--   in
+--     case h of
+--       Just x  -> x
+--       Nothing -> []
 
 
 sumPlusPerm : LoopsPermutation -> List (LoopsPermAnswers, LoopsPermutation)
@@ -244,4 +244,43 @@ findAnswerCS first secLoop thrLoop ansLoop =
 
 initCounter : Counter
 initCounter = [0, 0, 0]
+
+-- match specific answer according to screen value
+-- e.g. if answer provided for 12, 15, 18 but screen value is 18, 12,15
+--      then provide specific answer rotated as necessary to match screen value
+-- adjustSpecificAnswer : WheelPosition ->
+--                        WheelLoop -> WheelLoop -> WheelLoop ->
+--                          List (LoopsPermAnswers, LoopsPermutation)
+
+
+-- PuzzleModule.findSpecificAnswer [1,2,3] [[4,5,6], [5,6,4], [6,4,5]] [[7,8,9], [8,9,7], [9,7,8]] [[12,15,18], [15,18,12], [18,12,15]]
+-- [([12,15,18],[[1,2,3],[4,5,6],[7,8,9]])]
+--     : List
+--         ( PuzzleModule.LoopsPermAnswers, PuzzleModule.LoopsPermutation )
+
+--  Maybe.withDefault ([], [[]]) <| List.head [([12,15,18],[[1,2,3],[4,5,6],[7,8,9]])]
+-- ([12,15,18],[[1,2,3],[4,5,6],[7,8,9]]) : ( List number, List (List number1) )
+
+-- Tuple.first <| Maybe.withDefault ([], [[]]) <| List.head [([12,15,18],[[1,2,3],[4,5,6],[7,8,9]])]
+-- [12,15,18] : List number
+
+-- Tuple.second <| Maybe.withDefault ([], [[]]) <| List.head [([12,15,18],[[1,2,3],[4,5,6],[7,8,9]])]
+-- [[1,2,3],[4,5,6],[7,8,9]] : List (List number)
+
+-- ansTurn :: Int -> (WheelPosition, [WheelPosition])
+-- ansTurn n = (turnWheel (Tuple.first findSpecificAnswer) n, 
+--               List.map (flip turnWheel <| n) (Tuple.second findSpecificAnswer) )
+
+-- findScreenAns :: WheelPosition -> Int -> ([Int], [WheelPosition])
+-- findScreenAns _   0 = ([], [])
+-- findScreenAns ans n =
+--    let ansT = fst $ ansTurn n
+--    in
+--      case ansT == ans of
+--        True   -> ansTurn n
+--        False  -> findScreenAns ans $ n - 1
+
+-- findScreenAnsX :: WheelPosition -> ([Int], [WheelPosition])
+-- findScreenAnsX ans =
+--   findScreenAns ans $ length $ fst findSpecificAnswer
 

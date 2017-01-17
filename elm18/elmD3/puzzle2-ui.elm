@@ -252,7 +252,30 @@ view ( modelHistory
     ansPermsPlusList        = results.ansPermsPlusList
     specificAnswerPlusList  = results.specificAnswerPlusList
     findAnswerLazy3         = results.findAnswerLazy3
-    buttonValue = buttonVal buttonList
+    buttonValue             = buttonVal buttonList
+
+    fpa = Maybe.withDefault ([], [[]]) <| List.head <| findSpecificAnswer firstList secLoop thrLoop ansLoop
+
+-- ansTurn :: Int -> (WheelPosition, [WheelPosition])
+    ansTurn n = 
+      (turnWheel (Tuple.first fpa) n, 
+              List.map (flip turnWheel <| n) (Tuple.second fpa) )
+
+-- findScreenAns :: WheelPosition -> Int -> ([Int], [WheelPosition])
+    findScreenAns ans n =
+      let ansT = Tuple.first <| ansTurn n
+      in
+        case n == 0 of 
+          True  -> ([], [])
+          False -> 
+            case ansT == ans of
+              True   -> ansTurn n
+              False  -> findScreenAns ans <| n - 1
+
+-- findScreenAnsX :: WheelPosition -> ([Int], [WheelPosition])
+    findScreenAnsX ans =
+      findScreenAns ans <| List.length <| Tuple.first fpa
+
   in
   div 
     [] 
@@ -307,6 +330,9 @@ view ( modelHistory
 
             , infoRow "2 Loop Perms"  twoListPerms     <| buttonValue 5
             , infoRow "3 Loop Perms"  threeListPerms   <| buttonValue 6
+            , infoRow "findAnswers2"  
+                        (findScreenAnsX <| wheelPositionFromString s4)   
+                                                       <| buttonValue 1            
             , infoRow "findAnswers"   specificAnswer   <| buttonValue 1
             , br [] []
 

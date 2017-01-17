@@ -9,17 +9,17 @@ getCounterBase = 8
 --lazy2startPos = 0
 
 -- test data that is easier to visualise and debug
---first =     [1,2,3]
---second =    [4,5,6]
---three =     [7,8,9]
---
---answers = [12, 15, 18]
+first =     [1,2,3]
+second =    [4,5,6]
+three =     [7,8,9]
 
-first =     [6, 5, 5, 6, 5, 4, 5, 4]
-second =    [4, 2, 2, 2, 4, 3, 3, 1]
-three =     [1, 3, 2, 3, 3, 2, 4, 3]
+answers = [12, 15, 18]
 
-answers = [12, 8, 12, 10, 10, 12, 10, 8]
+-- first =     [6, 5, 5, 6, 5, 4, 5, 4]
+-- second =    [4, 2, 2, 2, 4, 3, 3, 1]
+-- three =     [1, 3, 2, 3, 3, 2, 4, 3]
+
+-- answers = [12, 8, 12, 10, 10, 12, 10, 8]
 
 type WheelPosition    = [Int]
 type WheelLoop        = [WheelPosition]
@@ -284,4 +284,42 @@ methodChoice =
 
 -- use these settings for load testing
 --wheelLoopFromStartPos pos = permutations pos
+
+
+-- use ghci to build up code
+
+-- findSpecificAnswer
+-- ([12,15,18],[[1,2,3],[4,5,6],[7,8,9]])
+
+-- fst findSpecificAnswer
+-- [12,15,18]
+
+-- length $ fst findSpecificAnswer
+
+-- head $ snd findSpecificAnswer
+
+-- turnWheel (fst findSpecificAnswer) 1
+-- [15,18,12]
+
+-- turnWheel (head $ snd findSpecificAnswer) 1
+
+-- ansTurn n = (turnWheel (fst findSpecificAnswer) n, 
+--             turnWheel (head $ snd findSpecificAnswer) n)
+
+ansTurn :: Int -> (WheelPosition, [WheelPosition])
+ansTurn n = (turnWheel (fst findSpecificAnswer) n, 
+              map (flip turnWheel $ n) (snd findSpecificAnswer) )
+
+findScreenAns :: WheelPosition -> Int -> ([Int], [WheelPosition])
+findScreenAns _   0 = ([], [])
+findScreenAns ans n =
+   let ansT = fst $ ansTurn n
+   in
+     case ansT == ans of
+       True   -> ansTurn n
+       False  -> findScreenAns ans $ n - 1
+
+findScreenAnsX :: WheelPosition -> ([Int], [WheelPosition])
+findScreenAnsX ans =
+  findScreenAns ans $ length $ fst findSpecificAnswer
 
