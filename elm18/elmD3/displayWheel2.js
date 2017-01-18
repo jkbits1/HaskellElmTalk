@@ -21,10 +21,15 @@ function showCircle (donutDataList) {
 //Create a color scale
   var colorScale = d3.scale.linear()
     .domain([0.03, 2.1, 6])
+    // .domain([0, 2, 6])
     .range([
       "#3c7bb6",
       "#D8D865",
       "#d7191c"])
+    // .range([
+      // "#0000ff", // blue
+      // "#00ffff", // green
+      // "#ff0000"]) // red
     .interpolate(d3.interpolateHcl);
 
 //Create an arc function
@@ -106,6 +111,8 @@ function showCircle (donutDataList) {
   {
   //Create the donut slices
 
+    var firstColStartAngle = 0;
+
     svg.selectAll(".donutArcSlices")
     .data(getDataList)
     .enter().append("path")
@@ -113,8 +120,24 @@ function showCircle (donutDataList) {
 
     .attr("d", arc)
     .style("fill", (d, i) => {
-      if (i === 7) return "#CCCCCC"; //Other
-      else return colorScale(i);
+      var color = undefined;
+
+      if (i === 0) {
+          firstColStartAngle = d.startAngle;
+      }
+
+      if (d.data.sz === 2) {
+        color = "#ff7c1f";
+      }
+      else
+      if (i === 7) {
+        color = "#CCCCCC"; //Other
+      }
+      else {
+        color = colorScale(i);
+      }
+
+      return color;
     })
 
     .each(function (d, i) {
@@ -172,8 +195,21 @@ function showCircle (donutDataList) {
       .attr("class", "hiddenDonutArcs")
       .attr("id", "donutArc" + i)
       .attr("d", newArc)
-      .style("fill", "none");
+      // .style("fill", "none");
+      .style("fill", () => {
+        var color = "none";
+        // var color = "#FFFFFF";
+
+        // if (i === 0) {
+        //   color = "#CCCCCC"; //Other
+        // }
+
+        return color;
+      });
     });
+
+
+
 
     // text, left aligned, centered, flipped (see specific sections below)
     //Append the label names on the outside
@@ -228,6 +264,17 @@ function showCircle (donutDataList) {
     .attr("startOffset", "50%")
     .style("text-anchor", "middle")
     .attr("xlink:href", (d, i) => "#donutArc" + i)
-    .text(d => d.data.name);
+    .text(d => {
+      var value = d.data.name;
+
+      if (
+          // d.data.sz === 8 
+          d.data.sz > 2 
+            && d.startAngle === firstColStartAngle) {
+        value += "*";
+      } 
+      
+      return value;
+    });
   }
 }
