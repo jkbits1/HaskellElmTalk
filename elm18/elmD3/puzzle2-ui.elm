@@ -212,8 +212,8 @@ puzzleSolvedIndicator s1 s2 s3 s4 =
         , span  [ style <| solvedColor <| solved ] [ text <| solvedString ]
         ]
 
-showAnswerIndicator : List (a,b) -> Bool -> Html Msg
-showAnswerIndicator answerList show =
+showAnswerIndicator : List (a,b) -> Bool -> String -> Html Msg
+showAnswerIndicator answerList show ans =
   let
     found = not <| length answerList == 0
     foundString =
@@ -222,7 +222,18 @@ showAnswerIndicator answerList show =
         False -> "No"
   in
     div [ class "showAnswer", style <| displayItem show ]
-        [ text <| "Does solution exist? - " , span [ style <| solvedColor <| found ] [ text <| "findSpecificAnswer" ] ]
+        [ text <| "Solution - " 
+        , span [ 
+          style <| solvedColor <| found ] 
+          [ text <| ans
+            -- "findSpecificAnswerxx" 
+                      -- , infoRow "findAnswers2"  
+                        -- (
+                          -- findScreenAnsX 
+                        -- <| wheelPositionFromString s4)   
+
+          ] 
+        ]
 
 
 
@@ -338,7 +349,8 @@ view ( modelHistory
             [ class "container" ]
             [ 
               indicatorRow <| foundAnswerIndicator specificAnswer True
-            , indicatorRow <| showAnswerIndicator specificAnswer True
+            , indicatorRow <| showAnswerIndicator specificAnswer (buttonValue 1)
+                                <| toString (findScreenAnsX <| wheelPositionFromString s4)
             , indicatorRow <| puzzleSolvedIndicator s1 s2 s3 s4
             , br [] []
 
