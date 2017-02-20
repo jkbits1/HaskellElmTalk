@@ -249,6 +249,9 @@ port dataProcessedItems : (List String -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model = dataProcessedItems D3Response
 
+-- outgoing port to js
+port showWheel : List (List WheelItem) -> Cmd msg
+
 --viewLift : Signal Html
 --viewLift = Signal.map (view updatesChnl.address) updateModelLift
 
@@ -377,9 +380,6 @@ view ( modelHistory
         ]
     ]
 
--- outgoing port to js
-port showWheel : List (List WheelItem) -> Cmd msg
-
 -- converts Signal Update (from updatesChnl) to Signal Model, 
 -- using non-signal updateModel
 --updateModelLift : Signal Model
@@ -388,6 +388,7 @@ port showWheel : List (List WheelItem) -> Cmd msg
 --                    initialModelState
 --                    updatesChnl.signal
 
+type ModelMotion = Forward | Backward | Static
 
 -- converts Update to new Model
 updateModel : Msg -> Model -> (Model, Cmd Msg)
@@ -410,23 +411,32 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
 
     rotateNumsString s = wheelText <| turnWheel (wheelPositionFromString s) 1
 
-    createModel inputs buttonStates forward =
+    createModel newInputs newButtonStates forward =
       let
-        i  = inputs.count
-        s1 = inputs.s1
-        s2 = inputs.s2
-        s3 = inputs.s3
-        s4 = inputs.s4
-        newHistory =
+        currentHistory =
           case forward of 
-            True  -> (inputs, buttonStates) :: modelHistory
-            False -> tailHistory
+            Forward  -> (newInputs, newButtonStates) :: modelHistory
+            Static   -> modelHistory
+            Backward -> tailHistory
 
-        first     = wheelPositionFromString s1
-        answers   = wheelPositionFromString s4
-        secLoop   = makeSecLoop s2
-        thrLoop   = makeThrLoop s3
-        ansLoop   = makeAnsLoop s4
+        currentInputs =
+          case forward of 
+            Forward -> newInputs
+            Static  -> newInputs
+            Backward -> 
+              Tuple.first <| Maybe.withDefault (initialInputs, initialStates) <| head currentHistory
+
+        i  = newInputs.count
+        newS1 = currentInputs.s1
+        newS2 = currentInputs.s2
+        newS3 = currentInputs.s3
+        newS4 = currentInputs.s4
+
+        first     = wheelPositionFromString newS1
+        answers   = wheelPositionFromString newS4
+        secLoop   = makeSecLoop             newS2
+        thrLoop   = makeThrLoop             newS3
+        ansLoop   = makeAnsLoop             newS4
 
         newCalcs  = {
             firstList = first, secLoop = secLoop, thrLoop = thrLoop, ansLoop = ansLoop,
@@ -439,28 +449,39 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
             findAnswerLazy3         = findAnswerCS            first secLoop thrLoop ansLoop
           }
       in
-        (newHistory, inputs, buttonStates, newCalcs)
-    mdl = createModel inputs buttonList True
+        (currentHistory, currentInputs, newButtonStates, newCalcs)
+
+    mdl = createModel inputs buttonList Forward
     wd1 = d3DataFromString s1
     wd2 = d3DataFromString s2
     wd3 = d3DataFromString s3
     wd4 = d3DataFromString s4
 
     createModelCircle inputs wheelData = 
-      (createModel inputs buttonList True, showWheel wheelData )
+      (createModel inputs buttonList Forward, showWheel wheelData )
 
     createModelShow buttonNum = 
-      createModel { inputs | count = newCount } (buttonListToggle buttonList buttonNum) True
+      createModel { inputs | count = newCount } (buttonListToggle buttonList buttonNum) Forward
 
     rotS1 = rotateNumsString s1
     rotS2 = rotateNumsString s2
     rotS3 = rotateNumsString s3
   in
     case update of
-      NoOp        ->    (createModel inputs buttonList True, Cmd.none)
+      NoOp        ->    (createModel inputs buttonList Forward, Cmd.none)
 
-      Back        ->    (createModel inputs states False, Cmd.none -- showWheel [ wd1, wd2, wd3, wd4  ]                             
-                        )
+      Back        ->    
+        let 
+          prevInputs = Tuple.first <| Maybe.withDefault (initialInputs, initialStates) <| head tailHistory
+        in
+          (createModel inputs states Backward, 
+                            -- Cmd.none 
+                            showWheel
+                              [ d3DataFromString prevInputs.s1, 
+                                d3DataFromString prevInputs.s2, 
+                                d3DataFromString prevInputs.s3, 
+                                d3DataFromString prevInputs.s4  ]                             
+          )
 
       Circle1Field s -> createModelCircle { inputs | count = newCount, s1 = s } [ d3DataFromString s, wd2, wd3, wd4 ]
       Circle2Field s -> createModelCircle { inputs | count = newCount, s2 = s } [ wd1, d3DataFromString s, wd3, wd4 ]
@@ -484,7 +505,17 @@ updateModel update ( modelHistory, inputs, buttonList, results ) =
       Rotate2 -> createModelCircle  { inputs | count = i, s2 = rotS2 } [ wd1, d3DataFromString rotS2, wd3, wd4 ]
       Rotate3 -> createModelCircle  { inputs | count = i, s3 = rotS3 } [ wd1, wd2, d3DataFromString rotS3, wd4 ]
       -- currently a no-op
-      D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
+      -- D3Response rs -> (createModel { inputs | count = i } buttonList True, Cmd.none)
+      
+      D3Response rs -> 
+        -- don't move model history forward
+        -- let 
+        --   prevModel = Maybe.withDefault (initialInputs, initialStates) <| head tailHistory
+        -- in
+          (createModel { inputs | count = i } buttonList 
+            -- True
+            Static
+            , Cmd.none)
 
 initialInputs = { count = 0, s1 = "1,2,3", s2 = "4,5,6", s3 = "7,8,9", s4 = "12,15,18" }
 initialStates = [False, False, False, False, False, False, False, False, False, False]
