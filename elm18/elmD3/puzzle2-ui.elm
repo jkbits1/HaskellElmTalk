@@ -124,7 +124,7 @@ formGroupBasic : String -> String -> String -> (String -> Msg) -> List (String, 
 formGroupBasic lbl idVal val updateItem style msg =
   div [ class "wheelInput" ] 
       [ label [ for idVal, class "control-label col-sm-4 wheelInputLabel" ] 
-              [ text <| "Wheel " ++ lbl ]
+              [ text <| "Circle " ++ lbl ]
       , inputField idVal lbl val updateItem style
       ]
 
@@ -323,12 +323,12 @@ view ( modelHistory
         , Html.form 
             [ class "wheelsForm form-inline" ]
             [ div [] 
-                  [ formGroup "1"   "wheel1input"   s1 Circle1Field Rotate1
-                  , formGroup "2"   "wheel2input"   s2 Circle2Field Rotate2
+                  [ formGroup "1"       "wheel1input"   s1 Circle1Field Rotate1
+                  , formGroup "2"       "wheel2input"   s2 Circle2Field Rotate2
                   ]
             , div [] 
-                  [ formGroup "3"   "wheel3input"   s3 Circle3Field Rotate3
-                  , formGroup "Ans" "wheelAnsInput" s4 Circle4Field Rotate1
+                  [ formGroup "3"       "wheel3input"   s3 Circle3Field Rotate3
+                  , formGroup "Totals"  "wheelAnsInput" s4 Circle4Field Rotate1
                   ] 
             ]
         , div [class "rotBtns"] 
@@ -338,10 +338,10 @@ view ( modelHistory
         , br [] []
 
         , div [class "wheelCalcs"] 
-              [ wheelOnlyRow  1 "Wheel 1"                       s1
-              , wheelRow      2 "Wheel 2"   "Loop 2"            s2 secLoop ShowLoop2   <| buttonValue 2
-              , wheelRow      3 "Wheel 3"   "Loop 3"            s3 thrLoop ShowLoop3   <| buttonValue 3
-              , wheelRow      4 "Wheel Answers" "Loop Answers"  s4 ansLoop ShowLoopAns <| buttonValue 4 
+              [ wheelOnlyRow  1 "Circle 1"                       s1
+              , wheelRow      2 "Circle 2"   "Loop 2"            s2 secLoop ShowLoop2   <| buttonValue 2
+              , wheelRow      3 "Circle 3"   "Loop 3"            s3 thrLoop ShowLoop3   <| buttonValue 3
+              , wheelRow      4 "Circle Totals" "Loop Totals"    s4 ansLoop ShowLoopAns <| buttonValue 4 
               ]
         ]
     , br [] []
