@@ -212,6 +212,19 @@ puzzleSolvedIndicator s1 s2 s3 s4 =
         , span  [ style <| solvedColor <| solved ] [ text <| solvedString ]
         ]
 
+showAnswerIndicator : List (a,b) -> Bool -> Html Msg
+showAnswerIndicator answerList show =
+  let
+    found = not <| length answerList == 0
+    foundString =
+      case found of 
+        True  -> "Yes"
+        False -> "No"
+  in
+    div [ class "showAnswer", style <| displayItem show ]
+        [ text <| "Does solution exist? - " , span [ style <| solvedColor <| found ] [ text <| "findSpecificAnswer" ] ]
+
+
 
 -- converts Signal Model to Signal Html, using non-signal view
 --main : Signal Html
@@ -325,6 +338,7 @@ view ( modelHistory
             [ class "container" ]
             [ 
               indicatorRow <| foundAnswerIndicator specificAnswer True
+            , indicatorRow <| showAnswerIndicator specificAnswer True
             , indicatorRow <| puzzleSolvedIndicator s1 s2 s3 s4
             , br [] []
 
