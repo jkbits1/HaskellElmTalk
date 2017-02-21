@@ -1,0 +1,22 @@
+<div>
+  <div>
+    Get video file info
+    <br><br>
+    File name
+    <input #search type="text" (keyup)="keyup($event)">
+    <br>
+    Blocked letters
+    <input #searchNot type="text" (keyup)="keyupNot($event)">
+
+    {{fileName}}
+    <pre>{{ search.value | json }}</pre>
+    <ul>
+      <li *ngFor="let result of results">
+        <div class="titleNumberCol">
+          {{result.titleNumber}}</div>
+        <span class="lengthCol">
+          {{result.length}}</span>
+      </li>
+    </ul>
+  </div>
+</div>
