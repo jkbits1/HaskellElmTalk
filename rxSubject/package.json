@@ -1,0 +1,14 @@
+{
+  "name": "rxjsApp",
+  "version": "1.0.0",
+  "description": "part of uni-directional apps collection",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "rxjs": "^5.0.0-beta.11"
+  }
+}
