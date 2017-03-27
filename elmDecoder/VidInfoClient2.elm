@@ -11,7 +11,7 @@ import Task exposing (..)
 import Time
 import List exposing (..)
 
-import JsonBits2 exposing (..)
+import ClientCommands exposing (..)
 import ClientTypes exposing (..)
 
 --  elm make vidInfoClientDecoder2-018a.elm --output=vic2.js
